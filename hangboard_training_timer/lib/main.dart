@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Training Timer'),
     );
   }
 }
@@ -44,18 +44,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+  final _formKey = GlobalKey<FormState>();
+  final List<String> routines = <String>['Routine 1', 'Routine 2', 'Routine 3'];
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text('Training Timer'),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
@@ -89,20 +79,85 @@ class _MyHomePageState extends State<MyHomePage> {
           // center the children vertically; the main axis here is the vertical
           // axis because Columns are vertical (the cross axis would be
           // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
+          // TEST mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
+            ListView.separated(
+                shrinkWrap: true,
+                padding: const EdgeInsets.all(8),
+                itemCount: routines.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return Container(
+                    height: 50,
+                    color: Colors.blue,
+                    child: Container(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.only(left: 20),
+                        child: Text(
+                          '${routines[index]}',
+                          textAlign: TextAlign.left,
+                        )),
+                  );
+                },
+              separatorBuilder: (BuildContext context, int index) => const Divider(),
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: () {
+          showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                    content: Form(
+                        key: _formKey,
+                        child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: TextFormField(
+                                  decoration: InputDecoration(
+                                    labelText: 'Routine name *'
+                                  ),
+                                  validator: (value){
+                                    if(value.isEmpty){
+                                      return 'Please enter a name';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: <Widget>[
+                                  FlatButton(
+                                    color: Colors.grey,
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: Text(
+                                      "Cancel",
+                                    ),
+                                  ),
+                                  FlatButton(
+                                    color: Colors.blue,
+                                    onPressed: () {
+                                      if (_formKey.currentState.validate()){
+                                        //TODO: Save Routine Name and go to edit routine page
+                                        Navigator.pop(context);
+                                      }
+                                    },
+                                    child: Text(
+                                      "Create Routine",
+                                    ),
+                                  ),
+                                ],
+                              )
+                            ])));
+              });
+        },
         tooltip: 'Increment',
         child: Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
