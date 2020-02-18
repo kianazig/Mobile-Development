@@ -45,6 +45,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final _formKey = GlobalKey<FormState>();
+  final routineNameController = TextEditingController();
   final List<String> routines = <String>['Routine 1', 'Routine 2', 'Routine 3'];
 
   @override
@@ -82,23 +83,24 @@ class _MyHomePageState extends State<MyHomePage> {
           // TEST mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             ListView.separated(
-                shrinkWrap: true,
-                padding: const EdgeInsets.all(8),
-                itemCount: routines.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return Container(
-                    height: 50,
-                    color: Colors.blue,
-                    child: Container(
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.only(left: 20),
-                        child: Text(
-                          '${routines[index]}',
-                          textAlign: TextAlign.left,
-                        )),
-                  );
-                },
-              separatorBuilder: (BuildContext context, int index) => const Divider(),
+              shrinkWrap: true,
+              padding: const EdgeInsets.all(8),
+              itemCount: routines.length,
+              itemBuilder: (BuildContext context, int index) {
+                return Container(
+                  height: 50,
+                  color: Colors.blue,
+                  child: Container(
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(left: 20),
+                      child: Text(
+                        '${routines[index]}',
+                        textAlign: TextAlign.left,
+                      )),
+                );
+              },
+              separatorBuilder: (BuildContext context, int index) =>
+                  const Divider(),
             ),
           ],
         ),
@@ -117,11 +119,11 @@ class _MyHomePageState extends State<MyHomePage> {
                               Padding(
                                 padding: EdgeInsets.all(8.0),
                                 child: TextFormField(
+                                  controller: routineNameController,
                                   decoration: InputDecoration(
-                                    labelText: 'Routine name *'
-                                  ),
-                                  validator: (value){
-                                    if(value.isEmpty){
+                                      labelText: 'Routine name *'),
+                                  validator: (value) {
+                                    if (value.isEmpty) {
                                       return 'Please enter a name';
                                     }
                                     return null;
@@ -129,8 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                               ),
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: <Widget>[
                                   FlatButton(
                                     color: Colors.grey,
@@ -144,9 +145,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                   FlatButton(
                                     color: Colors.blue,
                                     onPressed: () {
-                                      if (_formKey.currentState.validate()){
+                                      if (_formKey.currentState.validate()) {
                                         //TODO: Save Routine Name and go to edit routine page
                                         Navigator.pop(context);
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (context) => EditRoutinePage(routineName: routineNameController.text,)),
+                                        );
                                       }
                                     },
                                     child: Text(
@@ -162,5 +167,88 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+}
+
+class EditRoutinePage extends StatelessWidget {
+  final String routineName;
+  final _formKey = GlobalKey<FormState>();
+  final stepNameController = TextEditingController();
+
+
+  EditRoutinePage({Key key, @required this.routineName}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(routineName),
+      ),
+      body: Center(child: Column(
+        children: <Widget>[
+          RaisedButton(
+            color: Colors.blue,
+            onPressed: () {
+              showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                        content: Form(
+                            key: _formKey,
+                            child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: TextFormField(
+                                      controller: stepNameController,
+                                      decoration: InputDecoration(
+                                          labelText: 'Step Name *'),
+                                      validator: (value) {
+                                        if (value.isEmpty) {
+                                          return 'Please enter a name';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: <Widget>[
+                                      FlatButton(
+                                        color: Colors.grey,
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: Text(
+                                          "Cancel",
+                                        ),
+                                      ),
+                                      FlatButton(
+                                        color: Colors.blue,
+                                        onPressed: () {
+                                          if (_formKey.currentState.validate()) {
+                                            //TODO: ADD STEP
+                                            Navigator.pop(context);
+                                          }
+                                        },
+                                        child: Text(
+                                          "Add Step",
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ])));
+                  });
+            },
+            child: Text(
+              "Add Step",
+            ),
+
+          )
+        ],
+      )),
+    );
+    // TODO: implement build
   }
 }
