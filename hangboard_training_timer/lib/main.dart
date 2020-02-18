@@ -93,14 +93,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Container(
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.only(left: 20),
-                      child: Text(
-                        '${routines[index]}',
-                        textAlign: TextAlign.left,
-                      )),
+                      child: ListTile(
+                        title: Text('${routines[index]}'),
+                        trailing: Icon(Icons.keyboard_arrow_right),
+                      ),),
                 );
               },
               separatorBuilder: (BuildContext context, int index) =>
-                  const Divider(),
+                  const Divider(height: 1),
             ),
           ],
         ),
