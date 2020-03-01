@@ -1,4 +1,30 @@
+import 'dart:async';
+import 'package:firebase_database/firebase_database.dart';
+
 import 'package:flutter/material.dart';
+
+
+class Phase {
+  String name;
+  String duration; //todo: no duration?
+
+  Phase(name, duration){
+    this.name = name;
+    this.duration = duration;
+  }
+}
+
+class Routine {
+  String id;
+  String name;
+  List<Phase> phases;
+
+  Routine(name){
+    this.name = name;
+    phases = List<Phase>();
+  }
+}
+
 
 void main() => runApp(MyApp());
 
@@ -44,9 +70,26 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+ final databaseReference = FirebaseDatabase.instance.reference().child('routines');
+
   final _formKey = GlobalKey<FormState>();
   final routineNameController = TextEditingController();
   final List<String> routines = <String>['Routine 1', 'Routine 2', 'Routine 3'];
+
+  void _addRoutine() {
+    var routine = Routine(routineNameController.text);
+    routineNameController.text = "";
+    Navigator.pop(context);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => EditRoutinePage(routine: routine,)),
+    );
+    //TODO: Add routine to database
+    databaseReference.push().set({
+      'name': routine.name,
+    });
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,12 +189,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                     color: Colors.blue,
                                     onPressed: () {
                                       if (_formKey.currentState.validate()) {
-                                        //TODO: Save Routine Name and go to edit routine page
-                                        Navigator.pop(context);
-                                        Navigator.push(
-                                            context,
-                                            MaterialPageRoute(builder: (context) => EditRoutinePage(routineName: routineNameController.text,)),
-                                        );
+                                        _addRoutine();
                                       }
                                     },
                                     child: Text(
@@ -170,22 +208,59 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class EditRoutinePage extends StatelessWidget {
-  final String routineName;
+class EditRoutinePage extends StatefulWidget{
+  final Routine routine;
+
+  EditRoutinePage({Key key, @required this.routine}) : super(key: key);
+
+  _EditRoutinePageState createState() => _EditRoutinePageState();
+}
+
+class _EditRoutinePageState extends State<EditRoutinePage> {
+
   final _formKey = GlobalKey<FormState>();
   final stepNameController = TextEditingController();
 
+  StreamSubscription<Event> _phaseAddedStream;
 
-  EditRoutinePage({Key key, @required this.routineName}) : super(key: key);
+  void _addStep() {
+    var phase = Phase(stepNameController.text, "test duration");
+    widget.routine.phases.add(phase);
+    stepNameController.text = "";
+    setState((){
+
+    });
+    //TODO: update routine in DB
+  }
 
   @override
-  Widget build(BuildContext context) {
+  StatefulWidget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(routineName),
+        title: Text(widget.routine.name),
       ),
       body: Center(child: Column(
         children: <Widget>[
+          ListView.separated(
+            shrinkWrap: true,
+            padding: const EdgeInsets.all(8),
+            itemCount: widget.routine.phases.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Container(
+                height: 50,
+                color: Colors.blue,
+                child: Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 20),
+                  child: ListTile(
+                    title: Text('${widget.routine.phases[index].name}'),
+                    trailing: Icon(Icons.delete),
+                  ),),
+              );
+            },
+            separatorBuilder: (BuildContext context, int index) =>
+            const Divider(height: 1),
+          ),
           RaisedButton(
             color: Colors.blue,
             onPressed: () {
@@ -228,7 +303,7 @@ class EditRoutinePage extends StatelessWidget {
                                         color: Colors.blue,
                                         onPressed: () {
                                           if (_formKey.currentState.validate()) {
-                                            //TODO: ADD STEP
+                                            _addStep();
                                             Navigator.pop(context);
                                           }
                                         },
