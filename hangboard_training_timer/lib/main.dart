@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+
 import 'package:flutter/material.dart';
 
+String userID;
 
 class Phase {
   String name;
@@ -26,9 +30,29 @@ class Routine {
 }
 
 
-void main() => runApp(MyApp());
+void main(){
+  runApp(MyApp());
+  getUserID();
+}
+
+void getUserID() async {
+  final databaseReference = FirebaseDatabase.instance.reference().child('user');
+  final sharedPreferences = await SharedPreferences.getInstance();
+  String id = sharedPreferences.getString("id") ?? null;
+  if(id == null){
+    var uuid = Uuid();
+    id = uuid.v4();
+    sharedPreferences.setString("id", id);
+    databaseReference.child(userID).set({});
+  }
+
+  userID = id;
+}
+
+
 
 class MyApp extends StatelessWidget {
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -70,7 +94,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
- final databaseReference = FirebaseDatabase.instance.reference().child('routines');
+  final databaseReference = FirebaseDatabase.instance.reference().child('user');
 
   final _formKey = GlobalKey<FormState>();
   final routineNameController = TextEditingController();
@@ -85,8 +109,9 @@ class _MyHomePageState extends State<MyHomePage> {
       MaterialPageRoute(builder: (context) => EditRoutinePage(routine: routine,)),
     );
     //TODO: Add routine to database
-    databaseReference.push().set({
-      'name': routine.name,
+
+    databaseReference.child(userID).update({
+      routine.name : routine.name
     });
 
   }
@@ -218,6 +243,8 @@ class EditRoutinePage extends StatefulWidget{
 
 class _EditRoutinePageState extends State<EditRoutinePage> {
 
+  var databaseReference = FirebaseDatabase.instance.reference().child('user').child(userID);
+
   final _formKey = GlobalKey<FormState>();
   final stepNameController = TextEditingController();
 
@@ -227,10 +254,15 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
     var phase = Phase(stepNameController.text, "test duration");
     widget.routine.phases.add(phase);
     stepNameController.text = "";
-    setState((){
+    setState((){});
+  }
 
-    });
-    //TODO: update routine in DB
+  void _updateRoutine() {
+    for(var i=0; i < widget.routine.phases.length; i++){
+      databaseReference.child(widget.routine.name).update({
+        i.toString() : widget.routine.phases[i].name
+      });
+    }
   }
 
   @override
@@ -238,6 +270,17 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.routine.name),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.check),
+            onPressed:(){
+              _updateRoutine();
+
+              //TODO: Instead of Navigator.pop, jump to ViewRoutinePage
+              Navigator.pop(context);
+            },
+          ),
+        ]
       ),
       body: Center(child: Column(
         children: <Widget>[
@@ -254,7 +297,14 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                   padding: const EdgeInsets.only(left: 20),
                   child: ListTile(
                     title: Text('${widget.routine.phases[index].name}'),
-                    trailing: Icon(Icons.delete),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed:(){
+                        var phase = widget.routine.phases[index];
+                        widget.routine.phases.remove(phase);
+                        setState((){});
+                      },
+                    ),
                   ),),
               );
             },
