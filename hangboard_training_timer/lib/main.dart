@@ -6,7 +6,17 @@ import 'package:uuid/uuid.dart';
 
 import 'package:flutter/material.dart';
 
-String userID;
+User user;
+
+class User {
+  String id;
+  List<Routine> routines;
+
+  User(id){
+    this.id = id;
+    routines = List<Routine>();
+  }
+}
 
 class Phase {
   String name;
@@ -43,10 +53,10 @@ void getUserID() async {
     var uuid = Uuid();
     id = uuid.v4();
     sharedPreferences.setString("id", id);
-    databaseReference.child(userID).set({});
+    databaseReference.child(id).set({});//TODO: Remove?
   }
 
-  userID = id;
+  user = new User(id);
 }
 
 
@@ -108,12 +118,17 @@ class _MyHomePageState extends State<MyHomePage> {
       context,
       MaterialPageRoute(builder: (context) => EditRoutinePage(routine: routine,)),
     );
-    //TODO: Add routine to database
 
-    databaseReference.child(userID).update({
-      routine.name : routine.name
+    user.routines.add(routine);
+    databaseReference.child(user.id).child(user.routines.indexOf(routine).toString()).update({
+      'name' : routine.name
     });
+  }
 
+  void getRoutines(){
+    databaseReference.child(user.id).once().then((DataSnapshot snapshot) {
+      print('Data : ${snapshot.value}');
+    });
   }
 
   @override
@@ -175,6 +190,9 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          //START TEST
+          getRoutines();
+          //END TEST
           showDialog(
               context: context,
               builder: (BuildContext context) {
@@ -243,7 +261,7 @@ class EditRoutinePage extends StatefulWidget{
 
 class _EditRoutinePageState extends State<EditRoutinePage> {
 
-  var databaseReference = FirebaseDatabase.instance.reference().child('user').child(userID);
+  var databaseReference = FirebaseDatabase.instance.reference().child('user').child(user.id);
 
   final _formKey = GlobalKey<FormState>();
   final stepNameController = TextEditingController();
@@ -258,9 +276,10 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
   }
 
   void _updateRoutine() {
+    var routineNumber = user.routines.indexOf(widget.routine);
     for(var i=0; i < widget.routine.phases.length; i++){
-      databaseReference.child(widget.routine.name).update({
-        i.toString() : widget.routine.phases[i].name
+      databaseReference.child(routineNumber.toString()).child('phases').child(i.toString()).update({
+        'name' : widget.routine.phases[i].name
       });
     }
   }
