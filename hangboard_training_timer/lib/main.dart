@@ -29,7 +29,6 @@ class Phase {
 }
 
 class Routine {
-  String id;
   String name;
   List<Phase> phases;
 
@@ -128,6 +127,16 @@ class _MyHomePageState extends State<MyHomePage> {
   void getRoutines(){
     databaseReference.child(user.id).once().then((DataSnapshot snapshot) {
       print('Data : ${snapshot.value}');
+
+      for(var nextRoutine in snapshot.value) {
+        Routine routine = Routine(nextRoutine['name']);
+        var phases = nextRoutine['phases'];
+        for(var nextPhase in phases){
+          Phase phase = Phase(nextPhase['name'], "test duration");//TODO: replace test duration
+          routine.phases.add(phase);
+        }
+        user.routines.add(routine);
+      }
     });
   }
 
