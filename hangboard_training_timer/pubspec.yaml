@@ -20,12 +20,13 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Allows local storage
+  #Allows local storage
   shared_preferences: 0.5.6+3
 
   #Generates unique user id
   uuid: 2.0.4
 
+  #Firebase
   firebase_core: ^0.4.0+9
   firebase_auth: ^0.14.0+5
   firebase_database: 3.1.1

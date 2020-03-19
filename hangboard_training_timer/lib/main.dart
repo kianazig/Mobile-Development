@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/cupertino.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -131,10 +132,13 @@ class _MyHomePageState extends State<MyHomePage> {
       for(var nextRoutine in snapshot.value) {
         Routine routine = Routine(nextRoutine['name']);
         var phases = nextRoutine['phases'];
-        for(var nextPhase in phases){
-          Phase phase = Phase(nextPhase['name'], "test duration");//TODO: replace test duration
-          routine.phases.add(phase);
+        if(phases != null){
+          for(var nextPhase in phases){
+            Phase phase = Phase(nextPhase['name'], "test duration");//TODO: replace test duration
+            routine.phases.add(phase);
+          }
         }
+
         user.routines.add(routine);
       }
     });
@@ -364,6 +368,16 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                         return null;
                                       },
                                     ),
+                                  ),
+                                  CupertinoTimerPicker(
+                                    mode: CupertinoTimerPickerMode.ms,
+                                    minuteInterval: 1,
+                                    secondInterval: 1,
+                                    initialTimerDuration: Duration.zero,
+                                    onTimerDurationChanged: (Duration changedTimer){
+                                      FocusScope.of(context).requestFocus(FocusNode());
+                                      setState((){});
+                                    },
                                   ),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
