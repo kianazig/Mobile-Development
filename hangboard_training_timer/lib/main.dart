@@ -21,11 +21,33 @@ class User {
 
 class Phase {
   String name;
-  String duration; //todo: no duration?
+  int minutes;
+  int seconds;
 
-  Phase(name, duration){
+  Phase(name, minutes, seconds){
     this.name = name;
-    this.duration = duration;
+    this.minutes = minutes;
+    this.seconds = seconds;
+  }
+
+  String getTitle(){
+    String title = name + ": ";
+
+    bool minutesDisplayed = false;
+    if (minutes > 0){
+      title += (minutes.toString() + " min");
+      minutesDisplayed = true;
+    }
+    if (seconds > 0){
+      if (minutesDisplayed){
+        title += (", "+ seconds.toString() + " sec");
+      }
+      else {
+        title += (seconds.toString() + " sec");
+      }
+    }
+
+    return title;
   }
 }
 
@@ -134,7 +156,7 @@ class _MyHomePageState extends State<MyHomePage> {
         var phases = nextRoutine['phases'];
         if(phases != null){
           for(var nextPhase in phases){
-            Phase phase = Phase(nextPhase['name'], "test duration");//TODO: replace test duration
+            Phase phase = Phase(nextPhase['name'], nextPhase['minutes'], nextPhase['seconds']);//TODO: replace test duration
             routine.phases.add(phase);
           }
         }
@@ -279,10 +301,13 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
   final _formKey = GlobalKey<FormState>();
   final stepNameController = TextEditingController();
 
+  var stepMinutes = 0;
+  var stepSeconds = 0;
+
   StreamSubscription<Event> _phaseAddedStream;
 
   void _addStep() {
-    var phase = Phase(stepNameController.text, "test duration");
+    var phase = Phase(stepNameController.text, stepMinutes, stepSeconds);
     widget.routine.phases.add(phase);
     stepNameController.text = "";
     setState((){});
@@ -292,7 +317,9 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
     var routineNumber = user.routines.indexOf(widget.routine);
     for(var i=0; i < widget.routine.phases.length; i++){
       databaseReference.child(routineNumber.toString()).child('phases').child(i.toString()).update({
-        'name' : widget.routine.phases[i].name
+        'name' : widget.routine.phases[i].name,
+        'minutes' : widget.routine.phases[i].minutes,
+        'seconds' : widget.routine.phases[i].seconds
       });
     }
   }
@@ -328,7 +355,7 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.only(left: 20),
                   child: ListTile(
-                    title: Text('${widget.routine.phases[index].name}'),
+                    title: Text('${widget.routine.phases[index].getTitle()}'),
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
                       onPressed:(){
@@ -374,9 +401,11 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                     minuteInterval: 1,
                                     secondInterval: 1,
                                     initialTimerDuration: Duration.zero,
-                                    onTimerDurationChanged: (Duration changedTimer){
+                                    onTimerDurationChanged: (Duration newDuration){
                                       FocusScope.of(context).requestFocus(FocusNode());
                                       setState((){});
+                                      stepMinutes = newDuration.inMinutes;
+                                      stepSeconds = newDuration.inSeconds % 60;
                                     },
                                   ),
                                   Row(
