@@ -142,13 +142,13 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     user.routines.add(routine);
-    databaseReference.child(user.id).child(user.routines.indexOf(routine).toString()).update({
+    databaseReference.child(user.id).child('routines').child(user.routines.indexOf(routine).toString()).update({
       'name' : routine.name
     });
   }
 
   void getRoutines(){
-    databaseReference.child(user.id).once().then((DataSnapshot snapshot) {
+    databaseReference.child(user.id).child('routines').once().then((DataSnapshot snapshot) {
       print('Data : ${snapshot.value}');
 
       for(var nextRoutine in snapshot.value) {
@@ -296,7 +296,7 @@ class EditRoutinePage extends StatefulWidget{
 
 class _EditRoutinePageState extends State<EditRoutinePage> {
 
-  var databaseReference = FirebaseDatabase.instance.reference().child('user').child(user.id);
+  var databaseReference = FirebaseDatabase.instance.reference().child('user').child(user.id).child('routines');
 
   final _formKey = GlobalKey<FormState>();
   final stepNameController = TextEditingController();
