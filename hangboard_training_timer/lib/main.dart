@@ -132,7 +132,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getUserID().then((id){
       _user = User(id);
@@ -146,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Navigator.pop(context);
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => EditRoutinePage(routine: routine,)),
+      MaterialPageRoute(builder: (context) => EditRoutinePage(routine: routine)),
     );
 
     _user.routines.add(routine);
@@ -164,7 +163,7 @@ class _MyHomePageState extends State<MyHomePage> {
         var phases = nextRoutine['phases'];
         if(phases != null){
           for(var nextPhase in phases){
-            Phase phase = Phase(nextPhase['name'], nextPhase['minutes'], nextPhase['seconds']);//TODO: replace test duration
+            Phase phase = Phase(nextPhase['name'], nextPhase['minutes'], nextPhase['seconds']);
             routine.phases.add(phase);
           }
         }
@@ -226,9 +225,17 @@ class _MyHomePageState extends State<MyHomePage> {
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.only(left: 20),
                       child: ListTile(
+
                         title: Text('${_user.routines[index].name}'),
                         trailing: Icon(Icons.keyboard_arrow_right),
-                      ),),
+                        onTap: (){
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => ViewRoutinePage(routine: _user.routines[index])),
+                          );
+                        }
+                      ),
+                    ),
                   );
                 },
                 separatorBuilder: (BuildContext context, int index) =>
@@ -298,6 +305,70 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+class ViewRoutinePage extends StatelessWidget{
+  final Routine routine;
+
+  ViewRoutinePage({Key key, @required this.routine}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+          title: Text(routine.name),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.edit),
+              onPressed:(){
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => EditRoutinePage(routine: routine)),
+                );
+              },
+            ),
+          ]
+      ),
+      body: Center(child: Column(
+        children: <Widget>[
+          RaisedButton(
+            color: Colors.blue,
+            onPressed: () {
+              //TODO: Go to timer page
+            },
+            child: Text(
+              "Start Routine!",
+            ),
+
+          ),
+          ListView.separated(
+            shrinkWrap: true,
+            padding: const EdgeInsets.all(8),
+            itemCount: routine.phases.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Container(
+                height: 50,
+                color: Colors.blue,
+                child: Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 20),
+                  child: ListTile(
+                    title: Text('${routine.phases[index].getTitle()}'),
+                  ),),
+              );
+            },
+            separatorBuilder: (BuildContext context, int index) =>
+            const Divider(height: 1),
+          ),
+
+        ],
+      )),
+
+    );
+  }
+
+
+}
+
 class EditRoutinePage extends StatefulWidget{
   final Routine routine;
 
@@ -316,8 +387,6 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
   var stepMinutes = 0;
   var stepSeconds = 0;
 
-  StreamSubscription<Event> _phaseAddedStream;
-
   void _addStep() {
     var phase = Phase(stepNameController.text, stepMinutes, stepSeconds);
     widget.routine.phases.add(phase);
@@ -327,6 +396,7 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
 
   void _updateRoutine() {
     var routineNumber = _user.routines.indexOf(widget.routine);
+    databaseReference.child(routineNumber.toString()).child('phases').remove();
     for(var i=0; i < widget.routine.phases.length; i++){
       databaseReference.child(routineNumber.toString()).child('phases').child(i.toString()).update({
         'name' : widget.routine.phases[i].name,
@@ -347,8 +417,11 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
             onPressed:(){
               _updateRoutine();
 
-              //TODO: Instead of Navigator.pop, jump to ViewRoutinePage
               Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ViewRoutinePage(routine: widget.routine)),
+              );
             },
           ),
         ]
@@ -457,6 +530,5 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
         ],
       )),
     );
-    // TODO: implement build
   }
 }
