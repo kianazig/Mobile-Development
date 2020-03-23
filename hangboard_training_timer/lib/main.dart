@@ -7,7 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import 'package:flutter/material.dart';
 
-User user;
+User _user;
 
 class User {
   String id;
@@ -64,10 +64,9 @@ class Routine {
 
 void main(){
   runApp(MyApp());
-  getUserID();
 }
 
-void getUserID() async {
+Future<String> getUserID() async {
   final databaseReference = FirebaseDatabase.instance.reference().child('user');
   final sharedPreferences = await SharedPreferences.getInstance();
   String id = sharedPreferences.getString("id") ?? null;
@@ -78,7 +77,7 @@ void getUserID() async {
     databaseReference.child(id).set({});//TODO: Remove?
   }
 
-  user = new User(id);
+  return id;
 }
 
 
@@ -130,7 +129,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final _formKey = GlobalKey<FormState>();
   final routineNameController = TextEditingController();
-  final List<String> routines = <String>['Routine 1', 'Routine 2', 'Routine 3'];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getUserID().then((id){
+      _user = User(id);
+      _getRoutines();
+    });
+  }
 
   void _addRoutine() {
     var routine = Routine(routineNameController.text);
@@ -141,14 +149,14 @@ class _MyHomePageState extends State<MyHomePage> {
       MaterialPageRoute(builder: (context) => EditRoutinePage(routine: routine,)),
     );
 
-    user.routines.add(routine);
-    databaseReference.child(user.id).child('routines').child(user.routines.indexOf(routine).toString()).update({
+    _user.routines.add(routine);
+    databaseReference.child(_user.id).child('routines').child(_user.routines.indexOf(routine).toString()).update({
       'name' : routine.name
     });
   }
 
-  void getRoutines(){
-    databaseReference.child(user.id).child('routines').once().then((DataSnapshot snapshot) {
+  void _getRoutines(){
+    databaseReference.child(_user.id).child('routines').once().then((DataSnapshot snapshot) {
       print('Data : ${snapshot.value}');
 
       for(var nextRoutine in snapshot.value) {
@@ -161,128 +169,132 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         }
 
-        user.routines.add(routine);
+        _user.routines.add(routine);
       }
     });
+
+    setState((){});
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text('Training Timer'),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          // TEST mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
-            ListView.separated(
-              shrinkWrap: true,
-              padding: const EdgeInsets.all(8),
-              itemCount: routines.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Container(
-                  height: 50,
-                  color: Colors.blue,
-                  child: Container(
+    if(_user == null){
+      return new Container();
+    }
+    else{
+      // This method is rerun every time setState is called, for instance as done
+      // by the _incrementCounter method above.
+      //
+      // The Flutter framework has been optimized to make rerunning build methods
+      // fast, so that you can just rebuild anything that needs updating rather
+      // than having to individually change instances of widgets.
+      return Scaffold(
+        appBar: AppBar(
+          // Here we take the value from the MyHomePage object that was created by
+          // the App.build method, and use it to set our appbar title.
+          title: Text('Training Timer'),
+        ),
+        body: Center(
+          // Center is a layout widget. It takes a single child and positions it
+          // in the middle of the parent.
+          child: Column(
+            // Column is also a layout widget. It takes a list of children and
+            // arranges them vertically. By default, it sizes itself to fit its
+            // children horizontally, and tries to be as tall as its parent.
+            //
+            // Invoke "debug painting" (press "p" in the console, choose the
+            // "Toggle Debug Paint" action from the Flutter Inspector in Android
+            // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
+            // to see the wireframe for each widget.
+            //
+            // Column has various properties to control how it sizes itself and
+            // how it positions its children. Here we use mainAxisAlignment to
+            // center the children vertically; the main axis here is the vertical
+            // axis because Columns are vertical (the cross axis would be
+            // horizontal).
+            // TEST mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              ListView.separated(
+                shrinkWrap: true,
+                padding: const EdgeInsets.all(8),
+                itemCount: _user.routines.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return Container(
+                    height: 50,
+                    color: Colors.blue,
+                    child: Container(
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.only(left: 20),
                       child: ListTile(
-                        title: Text('${routines[index]}'),
+                        title: Text('${_user.routines[index].name}'),
                         trailing: Icon(Icons.keyboard_arrow_right),
                       ),),
-                );
-              },
-              separatorBuilder: (BuildContext context, int index) =>
-                  const Divider(height: 1),
-            ),
-          ],
+                  );
+                },
+                separatorBuilder: (BuildContext context, int index) =>
+                const Divider(height: 1),
+              ),
+            ],
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          //START TEST
-          getRoutines();
-          //END TEST
-          showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                    content: Form(
-                        key: _formKey,
-                        child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: TextFormField(
-                                  controller: routineNameController,
-                                  decoration: InputDecoration(
-                                      labelText: 'Routine name *'),
-                                  validator: (value) {
-                                    if (value.isEmpty) {
-                                      return 'Please enter a name';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: <Widget>[
-                                  FlatButton(
-                                    color: Colors.grey,
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: Text(
-                                      "Cancel",
-                                    ),
-                                  ),
-                                  FlatButton(
-                                    color: Colors.blue,
-                                    onPressed: () {
-                                      if (_formKey.currentState.validate()) {
-                                        _addRoutine();
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                      content: Form(
+                          key: _formKey,
+                          child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: TextFormField(
+                                    controller: routineNameController,
+                                    decoration: InputDecoration(
+                                        labelText: 'Routine name *'),
+                                    validator: (value) {
+                                      if (value.isEmpty) {
+                                        return 'Please enter a name';
                                       }
+                                      return null;
                                     },
-                                    child: Text(
-                                      "Create Routine",
-                                    ),
                                   ),
-                                ],
-                              )
-                            ])));
-              });
-        },
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: <Widget>[
+                                    FlatButton(
+                                      color: Colors.grey,
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text(
+                                        "Cancel",
+                                      ),
+                                    ),
+                                    FlatButton(
+                                      color: Colors.blue,
+                                      onPressed: () {
+                                        if (_formKey.currentState.validate()) {
+                                          _addRoutine();
+                                        }
+                                      },
+                                      child: Text(
+                                        "Create Routine",
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              ])));
+                });
+          },
+          tooltip: 'Increment',
+          child: Icon(Icons.add),
+        ), // This trailing comma makes auto-formatting nicer for build methods.
+      );
+    }
   }
 }
 
@@ -296,7 +308,7 @@ class EditRoutinePage extends StatefulWidget{
 
 class _EditRoutinePageState extends State<EditRoutinePage> {
 
-  var databaseReference = FirebaseDatabase.instance.reference().child('user').child(user.id).child('routines');
+  var databaseReference = FirebaseDatabase.instance.reference().child('user').child(_user.id).child('routines');
 
   final _formKey = GlobalKey<FormState>();
   final stepNameController = TextEditingController();
@@ -314,7 +326,7 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
   }
 
   void _updateRoutine() {
-    var routineNumber = user.routines.indexOf(widget.routine);
+    var routineNumber = _user.routines.indexOf(widget.routine);
     for(var i=0; i < widget.routine.phases.length; i++){
       databaseReference.child(routineNumber.toString()).child('phases').child(i.toString()).update({
         'name' : widget.routine.phases[i].name,
