@@ -13,7 +13,7 @@ class User {
   String id;
   List<Routine> routines;
 
-  User(id){
+  User(id) {
     this.id = id;
     routines = List<Routine>();
   }
@@ -24,25 +24,24 @@ class Phase {
   int minutes;
   int seconds;
 
-  Phase(name, minutes, seconds){
+  Phase(name, minutes, seconds) {
     this.name = name;
     this.minutes = minutes;
     this.seconds = seconds;
   }
 
-  String getTitle(){
+  String getTitle() {
     String title = name + ": ";
 
     bool minutesDisplayed = false;
-    if (minutes > 0){
+    if (minutes > 0) {
       title += (minutes.toString() + " min");
       minutesDisplayed = true;
     }
-    if (seconds > 0){
-      if (minutesDisplayed){
-        title += (", "+ seconds.toString() + " sec");
-      }
-      else {
+    if (seconds > 0) {
+      if (minutesDisplayed) {
+        title += (", " + seconds.toString() + " sec");
+      } else {
         title += (seconds.toString() + " sec");
       }
     }
@@ -55,14 +54,13 @@ class Routine {
   String name;
   List<Phase> phases;
 
-  Routine(name){
+  Routine(name) {
     this.name = name;
     phases = List<Phase>();
   }
 }
 
-
-void main(){
+void main() {
   runApp(MyApp());
 }
 
@@ -70,20 +68,17 @@ Future<String> getUserID() async {
   final databaseReference = FirebaseDatabase.instance.reference().child('user');
   final sharedPreferences = await SharedPreferences.getInstance();
   String id = sharedPreferences.getString("id") ?? null;
-  if(id == null){
+  if (id == null) {
     var uuid = Uuid();
     id = uuid.v4();
     sharedPreferences.setString("id", id);
-    databaseReference.child(id).set({});//TODO: Remove?
+    databaseReference.child(id).set({}); //TODO: Remove?
   }
 
   return id;
 }
 
-
-
 class MyApp extends StatelessWidget {
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -133,7 +128,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    getUserID().then((id){
+    getUserID().then((id) {
       _user = User(id);
       _getRoutines();
     });
@@ -145,25 +140,33 @@ class _MyHomePageState extends State<MyHomePage> {
     Navigator.pop(context);
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => EditRoutinePage(routine: routine)),
+      MaterialPageRoute(
+          builder: (context) => EditRoutinePage(routine: routine)),
     );
 
     _user.routines.add(routine);
-    databaseReference.child(_user.id).child('routines').child(_user.routines.indexOf(routine).toString()).update({
-      'name' : routine.name
-    });
+    databaseReference
+        .child(_user.id)
+        .child('routines')
+        .child(_user.routines.indexOf(routine).toString())
+        .update({'name': routine.name});
   }
 
-  void _getRoutines(){
-    databaseReference.child(_user.id).child('routines').once().then((DataSnapshot snapshot) {
+  void _getRoutines() {
+    databaseReference
+        .child(_user.id)
+        .child('routines')
+        .once()
+        .then((DataSnapshot snapshot) {
       print('Data : ${snapshot.value}');
 
-      for(var nextRoutine in snapshot.value) {
+      for (var nextRoutine in snapshot.value) {
         Routine routine = Routine(nextRoutine['name']);
         var phases = nextRoutine['phases'];
-        if(phases != null){
-          for(var nextPhase in phases){
-            Phase phase = Phase(nextPhase['name'], nextPhase['minutes'], nextPhase['seconds']);
+        if (phases != null) {
+          for (var nextPhase in phases) {
+            Phase phase = Phase(
+                nextPhase['name'], nextPhase['minutes'], nextPhase['seconds']);
             routine.phases.add(phase);
           }
         }
@@ -172,15 +175,14 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
 
-    setState((){});
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    if(_user == null){
+    if (_user == null) {
       return new Container();
-    }
-    else{
+    } else {
       // This method is rerun every time setState is called, for instance as done
       // by the _incrementCounter method above.
       //
@@ -225,21 +227,21 @@ class _MyHomePageState extends State<MyHomePage> {
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.only(left: 20),
                       child: ListTile(
-
-                        title: Text('${_user.routines[index].name}'),
-                        trailing: Icon(Icons.keyboard_arrow_right),
-                        onTap: (){
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => ViewRoutinePage(routine: _user.routines[index])),
-                          );
-                        }
-                      ),
+                          title: Text('${_user.routines[index].name}'),
+                          trailing: Icon(Icons.keyboard_arrow_right),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => ViewRoutinePage(
+                                      routine: _user.routines[index])),
+                            );
+                          }),
                     ),
                   );
                 },
                 separatorBuilder: (BuildContext context, int index) =>
-                const Divider(height: 1),
+                    const Divider(height: 1),
               ),
             ],
           ),
@@ -270,7 +272,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ),
                                 ),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
                                   children: <Widget>[
                                     FlatButton(
                                       color: Colors.grey,
@@ -305,7 +308,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class ViewRoutinePage extends StatelessWidget{
+class ViewRoutinePage extends StatelessWidget {
   final Routine routine;
 
   ViewRoutinePage({Key key, @required this.routine}) : super(key: key);
@@ -313,32 +316,35 @@ class ViewRoutinePage extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: Text(routine.name),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.edit),
-              onPressed:(){
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => EditRoutinePage(routine: routine)),
-                );
-              },
-            ),
-          ]
-      ),
-      body: Center(child: Column(
+      appBar: AppBar(title: Text(routine.name), actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.edit),
+          onPressed: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => EditRoutinePage(routine: routine)),
+            );
+          },
+        ),
+      ]),
+      body: Center(
+          child: Column(
         children: <Widget>[
           RaisedButton(
             color: Colors.blue,
             onPressed: () {
-              //TODO: Go to timer page
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => TimerPage(routine: routine)),
+              );
             },
             child: Text(
               "Start Routine!",
             ),
-
           ),
           ListView.separated(
             shrinkWrap: true,
@@ -353,23 +359,48 @@ class ViewRoutinePage extends StatelessWidget{
                   padding: const EdgeInsets.only(left: 20),
                   child: ListTile(
                     title: Text('${routine.phases[index].getTitle()}'),
-                  ),),
+                  ),
+                ),
               );
             },
             separatorBuilder: (BuildContext context, int index) =>
-            const Divider(height: 1),
+                const Divider(height: 1),
           ),
-
         ],
       )),
-
     );
   }
-
-
 }
 
-class EditRoutinePage extends StatefulWidget{
+class TimerPage extends StatefulWidget {
+  final Routine routine;
+
+  TimerPage({Key key, @required this.routine}) : super(key: key);
+
+  _TimerPageState createState() => _TimerPageState();
+}
+
+class _TimerPageState extends State<TimerPage> {
+  var _currentStep = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.routine.name), actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.pause),
+          onPressed: () {
+
+          },
+        ),
+      ]),
+
+      // TODO: implement build
+    );
+  }
+}
+
+class EditRoutinePage extends StatefulWidget {
   final Routine routine;
 
   EditRoutinePage({Key key, @required this.routine}) : super(key: key);
@@ -378,8 +409,11 @@ class EditRoutinePage extends StatefulWidget{
 }
 
 class _EditRoutinePageState extends State<EditRoutinePage> {
-
-  var databaseReference = FirebaseDatabase.instance.reference().child('user').child(_user.id).child('routines');
+  var databaseReference = FirebaseDatabase.instance
+      .reference()
+      .child('user')
+      .child(_user.id)
+      .child('routines');
 
   final _formKey = GlobalKey<FormState>();
   final stepNameController = TextEditingController();
@@ -391,17 +425,21 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
     var phase = Phase(stepNameController.text, stepMinutes, stepSeconds);
     widget.routine.phases.add(phase);
     stepNameController.text = "";
-    setState((){});
+    setState(() {});
   }
 
   void _updateRoutine() {
     var routineNumber = _user.routines.indexOf(widget.routine);
     databaseReference.child(routineNumber.toString()).child('phases').remove();
-    for(var i=0; i < widget.routine.phases.length; i++){
-      databaseReference.child(routineNumber.toString()).child('phases').child(i.toString()).update({
-        'name' : widget.routine.phases[i].name,
-        'minutes' : widget.routine.phases[i].minutes,
-        'seconds' : widget.routine.phases[i].seconds
+    for (var i = 0; i < widget.routine.phases.length; i++) {
+      databaseReference
+          .child(routineNumber.toString())
+          .child('phases')
+          .child(i.toString())
+          .update({
+        'name': widget.routine.phases[i].name,
+        'minutes': widget.routine.phases[i].minutes,
+        'seconds': widget.routine.phases[i].seconds
       });
     }
   }
@@ -409,24 +447,24 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
   @override
   StatefulWidget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.routine.name),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.check),
-            onPressed:(){
-              _updateRoutine();
+      appBar: AppBar(title: Text(widget.routine.name), actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.check),
+          onPressed: () {
+            _updateRoutine();
 
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ViewRoutinePage(routine: widget.routine)),
-              );
-            },
-          ),
-        ]
-      ),
-      body: Center(child: Column(
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      ViewRoutinePage(routine: widget.routine)),
+            );
+          },
+        ),
+      ]),
+      body: Center(
+          child: Column(
         children: <Widget>[
           ListView.separated(
             shrinkWrap: true,
@@ -443,17 +481,18 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                     title: Text('${widget.routine.phases[index].getTitle()}'),
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
-                      onPressed:(){
+                      onPressed: () {
                         var phase = widget.routine.phases[index];
                         widget.routine.phases.remove(phase);
-                        setState((){});
+                        setState(() {});
                       },
                     ),
-                  ),),
+                  ),
+                ),
               );
             },
             separatorBuilder: (BuildContext context, int index) =>
-            const Divider(height: 1),
+                const Divider(height: 1),
           ),
           RaisedButton(
             color: Colors.blue,
@@ -486,15 +525,18 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                     minuteInterval: 1,
                                     secondInterval: 1,
                                     initialTimerDuration: Duration.zero,
-                                    onTimerDurationChanged: (Duration newDuration){
-                                      FocusScope.of(context).requestFocus(FocusNode());
-                                      setState((){});
+                                    onTimerDurationChanged:
+                                        (Duration newDuration) {
+                                      FocusScope.of(context)
+                                          .requestFocus(FocusNode());
+                                      setState(() {});
                                       stepMinutes = newDuration.inMinutes;
                                       stepSeconds = newDuration.inSeconds % 60;
                                     },
                                   ),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
                                     children: <Widget>[
                                       FlatButton(
                                         color: Colors.grey,
@@ -508,7 +550,8 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                       FlatButton(
                                         color: Colors.blue,
                                         onPressed: () {
-                                          if (_formKey.currentState.validate()) {
+                                          if (_formKey.currentState
+                                              .validate()) {
                                             _addStep();
                                             Navigator.pop(context);
                                           }
@@ -525,7 +568,6 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
             child: Text(
               "Add Step",
             ),
-
           )
         ],
       )),
