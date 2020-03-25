@@ -387,12 +387,14 @@ class _TimerPageState extends State<TimerPage> {
   int _currentStep = 0;
   int _remainingTime = 0;
   String _displayTime = "";
+  String _stepName = "";
 
   @override
   void initState() {
     super.initState();
     _remainingTime = widget.routine.phases[_currentStep].minutes * 60 + widget.routine.phases[_currentStep].seconds;
     _displayTime = formatTime(_remainingTime);
+    _stepName = widget.routine.phases[_currentStep].name;
   }
 
   void start(){
@@ -402,6 +404,7 @@ class _TimerPageState extends State<TimerPage> {
       seconds: 1,
     ), (Timer timer){
       setState((){
+        _stepName = widget.routine.phases[_currentStep].name;
         _remainingTime = _remainingTime - 1;
         _displayTime = formatTime(_remainingTime);
         if(_remainingTime < 1){
@@ -439,6 +442,7 @@ class _TimerPageState extends State<TimerPage> {
   void finishRoutine(){
     setState(() {
       _currentStep = 0;
+      _stepName = "";
       _displayTime = "Done!";
     });
   }
@@ -457,6 +461,12 @@ class _TimerPageState extends State<TimerPage> {
       body: Center(
           child: Column(
             children: <Widget>[
+              Text(
+                _stepName,
+                style: TextStyle(
+                  fontSize: 40.0
+                ),
+              ),
               Text(
                 _displayTime,
                 style: TextStyle(
