@@ -160,6 +160,7 @@ class _MyHomePageState extends State<MyHomePage> {
         .then((DataSnapshot snapshot) {
       print('Data : ${snapshot.value}');
 
+
       for (var nextRoutine in snapshot.value) {
         Routine routine = Routine(nextRoutine['name']);
         var phases = nextRoutine['phases'];
@@ -171,11 +172,13 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         }
 
-        _user.routines.add(routine);
+        setState((){
+          _user.routines.add(routine);
+        });
       }
     });
 
-    setState(() {});
+   // setState(() {});
   }
 
   @override
@@ -381,19 +384,87 @@ class TimerPage extends StatefulWidget {
 }
 
 class _TimerPageState extends State<TimerPage> {
-  var _currentStep = 0;
+  int _currentStep = 0;
+  int _remainingTime = 0;
+  String _displayTime = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _remainingTime = widget.routine.phases[_currentStep].minutes * 60 + widget.routine.phases[_currentStep].seconds;
+    _displayTime = formatTime(_remainingTime);
+  }
+
+  void start(){
+    _remainingTime = widget.routine.phases[_currentStep].minutes * 60 + widget.routine.phases[_currentStep].seconds;
+    _remainingTime++;
+    Timer.periodic(Duration(
+      seconds: 1,
+    ), (Timer timer){
+      setState((){
+        _remainingTime = _remainingTime - 1;
+        _displayTime = formatTime(_remainingTime);
+        if(_remainingTime < 1){
+          timer.cancel();
+          goToNextStep();
+        }
+      });
+    });
+  }
+
+  String formatTime(int time){
+    String formattedTime = "";
+    int minutes = 0;
+    int seconds = 0;
+    if (time < 60){
+      seconds = time;
+    } else {
+      minutes = time ~/ 60;
+      seconds = time % 60;
+    }
+    formattedTime = minutes.toString()+":"+seconds.toString().padLeft(2, '0');
+    return formattedTime;
+  }
+
+  void goToNextStep(){
+    _currentStep++;
+    if (_currentStep < widget.routine.phases.length){
+      start();
+    }
+    else {
+      finishRoutine();
+    }
+  }
+
+  void finishRoutine(){
+    setState(() {
+      _currentStep = 0;
+      _displayTime = "Done!";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.routine.name), actions: <Widget>[
         IconButton(
-          icon: Icon(Icons.pause),
+          icon: Icon(Icons.play_arrow),
           onPressed: () {
-
+            start();
           },
         ),
       ]),
+      body: Center(
+          child: Column(
+            children: <Widget>[
+              Text(
+                _displayTime,
+                style: TextStyle(
+                  fontSize: 50.0
+                ),
+              ),
+            ],
+          )),
 
       // TODO: implement build
     );
