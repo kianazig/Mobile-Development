@@ -160,7 +160,6 @@ class _MyHomePageState extends State<MyHomePage> {
         .then((DataSnapshot snapshot) {
       print('Data : ${snapshot.value}');
 
-
       for (var nextRoutine in snapshot.value) {
         Routine routine = Routine(nextRoutine['name']);
         var phases = nextRoutine['phases'];
@@ -172,13 +171,13 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         }
 
-        setState((){
+        setState(() {
           _user.routines.add(routine);
         });
       }
     });
 
-   // setState(() {});
+    // setState(() {});
   }
 
   @override
@@ -384,67 +383,88 @@ class TimerPage extends StatefulWidget {
 }
 
 class _TimerPageState extends State<TimerPage> {
+  Timer _timer;
   int _currentStep = 0;
   int _remainingTime = 0;
   String _displayTime = "";
   String _stepName = "";
+  bool disablePrevious = false;
 
   @override
   void initState() {
     super.initState();
-    _remainingTime = widget.routine.phases[_currentStep].minutes * 60 + widget.routine.phases[_currentStep].seconds;
+    _remainingTime = widget.routine.phases[_currentStep].minutes * 60 +
+        widget.routine.phases[_currentStep].seconds;
     _displayTime = formatTime(_remainingTime);
     _stepName = widget.routine.phases[_currentStep].name;
   }
 
-  void start(){
-    _remainingTime = widget.routine.phases[_currentStep].minutes * 60 + widget.routine.phases[_currentStep].seconds;
+  void start() {
+    _remainingTime = widget.routine.phases[_currentStep].minutes * 60 +
+        widget.routine.phases[_currentStep].seconds;
     _remainingTime++;
-    Timer.periodic(Duration(
-      seconds: 1,
-    ), (Timer timer){
-      setState((){
+    Timer.periodic(
+        Duration(
+          seconds: 1,
+        ), (Timer timer) {
+          _timer = timer;
+      setState(() {
         _stepName = widget.routine.phases[_currentStep].name;
-        _remainingTime = _remainingTime - 1;
+        _remainingTime--;
+        disablePrevious = false;
         _displayTime = formatTime(_remainingTime);
-        if(_remainingTime < 1){
-          timer.cancel();
+        if (_remainingTime < 1) {
+          _timer.cancel();
           goToNextStep();
         }
       });
     });
   }
 
-  String formatTime(int time){
+  String formatTime(int time) {
     String formattedTime = "";
     int minutes = 0;
     int seconds = 0;
-    if (time < 60){
+    if (time < 60) {
       seconds = time;
     } else {
       minutes = time ~/ 60;
       seconds = time % 60;
     }
-    formattedTime = minutes.toString()+":"+seconds.toString().padLeft(2, '0');
+    formattedTime =
+        minutes.toString() + ":" + seconds.toString().padLeft(2, '0');
     return formattedTime;
   }
 
-  void goToNextStep(){
+  void goToNextStep() {
+    disablePrevious = true;
+    _timer.cancel();
     _currentStep++;
-    if (_currentStep < widget.routine.phases.length){
+    if (_currentStep < widget.routine.phases.length) {
       start();
-    }
-    else {
+    } else {
       finishRoutine();
     }
   }
 
-  void finishRoutine(){
+  void finishRoutine() {
     setState(() {
       _currentStep = 0;
       _stepName = "";
       _displayTime = "Done!";
     });
+  }
+
+  void skipPrevious() {
+    if (!disablePrevious){
+      disablePrevious = true;
+      _timer.cancel();
+      if(_remainingTime >= widget.routine.phases[_currentStep].minutes * 60 +
+          widget.routine.phases[_currentStep].seconds && _currentStep > 0){
+        _currentStep--;
+      }
+      start();
+    }
   }
 
   @override
@@ -460,21 +480,36 @@ class _TimerPageState extends State<TimerPage> {
       ]),
       body: Center(
           child: Column(
-            children: <Widget>[
-              Text(
-                _stepName,
-                style: TextStyle(
-                  fontSize: 40.0
-                ),
-              ),
-              Text(
-                _displayTime,
-                style: TextStyle(
-                  fontSize: 50.0
-                ),
-              ),
-            ],
-          )),
+        children: <Widget>[
+          Text(
+            _stepName,
+            style: TextStyle(fontSize: 40.0),
+          ),
+          Text(
+            _displayTime,
+            style: TextStyle(fontSize: 50.0),
+          ),
+          Row(children: <Widget>[
+            IconButton(
+                icon: Icon(Icons.skip_previous),
+                onPressed: () {
+                  skipPrevious();
+                }),
+            IconButton(
+              icon: Icon(Icons.pause),
+              onPressed: () {
+
+              }
+            ),
+            IconButton(
+              icon: Icon(Icons.skip_next),
+              onPressed: () {
+
+              },
+            ),
+          ]),
+        ],
+      )),
 
       // TODO: implement build
     );
