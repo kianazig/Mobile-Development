@@ -389,6 +389,9 @@ class _TimerPageState extends State<TimerPage> {
   String _displayTime = "";
   String _stepName = "";
   bool disablePrevious = false;
+  bool paused = true;
+  bool disablePause = false;
+  Icon _pausePlayIcon = Icon(Icons.play_arrow);
 
   @override
   void initState() {
@@ -399,10 +402,19 @@ class _TimerPageState extends State<TimerPage> {
     _stepName = widget.routine.phases[_currentStep].name;
   }
 
-  void start() {
+  void playNextStep() {
     _remainingTime = widget.routine.phases[_currentStep].minutes * 60 +
         widget.routine.phases[_currentStep].seconds;
-    _remainingTime++;
+    _stepName = widget.routine.phases[_currentStep].name;
+    _displayTime = formatTime(_remainingTime);
+    if(!paused){
+      play();
+    }
+    setState((){});
+  }
+
+  void play() {
+    paused = false;
     Timer.periodic(
         Duration(
           seconds: 1,
@@ -412,8 +424,9 @@ class _TimerPageState extends State<TimerPage> {
         _stepName = widget.routine.phases[_currentStep].name;
         _remainingTime--;
         disablePrevious = false;
+        disablePause = false;
         _displayTime = formatTime(_remainingTime);
-        if (_remainingTime < 1) {
+        if (_remainingTime < 0) {
           _timer.cancel();
           goToNextStep();
         }
@@ -438,10 +451,11 @@ class _TimerPageState extends State<TimerPage> {
 
   void goToNextStep() {
     disablePrevious = true;
+    disablePause = true;
     _timer.cancel();
     _currentStep++;
     if (_currentStep < widget.routine.phases.length) {
-      start();
+      playNextStep();
     } else {
       finishRoutine();
     }
@@ -452,19 +466,31 @@ class _TimerPageState extends State<TimerPage> {
       _currentStep = 0;
       _stepName = "";
       _displayTime = "Done!";
+      paused = true;
+      _pausePlayIcon = Icon(Icons.play_arrow);
     });
   }
 
   void skipPrevious() {
     if (!disablePrevious){
-      disablePrevious = true;
+
+      if(!paused){
+        disablePrevious = true;
+      }
+
       _timer.cancel();
       if(_remainingTime >= widget.routine.phases[_currentStep].minutes * 60 +
-          widget.routine.phases[_currentStep].seconds && _currentStep > 0){
+          widget.routine.phases[_currentStep].seconds - 1 && _currentStep > 0){
         _currentStep--;
       }
-      start();
+
+      playNextStep();
     }
+  }
+
+  void pause() {
+    paused = true;
+    _timer.cancel();
   }
 
   @override
@@ -474,7 +500,8 @@ class _TimerPageState extends State<TimerPage> {
         IconButton(
           icon: Icon(Icons.play_arrow),
           onPressed: () {
-            start();
+            paused = false;
+            playNextStep();
           },
         ),
       ]),
@@ -496,9 +523,18 @@ class _TimerPageState extends State<TimerPage> {
                   skipPrevious();
                 }),
             IconButton(
-              icon: Icon(Icons.pause),
+              icon: _pausePlayIcon,
               onPressed: () {
-
+                if (!disablePause){
+                  if (paused){
+                    setState((){_pausePlayIcon = Icon(Icons.pause);});
+                    play();
+                  }
+                  else {
+                    setState((){_pausePlayIcon = Icon(Icons.play_arrow);});
+                    pause();
+                  }
+                }
               }
             ),
             IconButton(
