@@ -391,6 +391,7 @@ class _TimerPageState extends State<TimerPage> {
   bool disablePrevious = false;
   bool paused = true;
   bool disablePause = false;
+  bool disableNext = false;
   Icon _pausePlayIcon = Icon(Icons.play_arrow);
 
   @override
@@ -425,6 +426,7 @@ class _TimerPageState extends State<TimerPage> {
         _remainingTime--;
         disablePrevious = false;
         disablePause = false;
+        disableNext = false;
         _displayTime = formatTime(_remainingTime);
         if (_remainingTime < 0) {
           _timer.cancel();
@@ -452,6 +454,7 @@ class _TimerPageState extends State<TimerPage> {
   void goToNextStep() {
     disablePrevious = true;
     disablePause = true;
+    disableNext = true;
     _timer.cancel();
     _currentStep++;
     if (_currentStep < widget.routine.phases.length) {
@@ -464,10 +467,15 @@ class _TimerPageState extends State<TimerPage> {
   void finishRoutine() {
     setState(() {
       _currentStep = 0;
+      _remainingTime = widget.routine.phases[_currentStep].minutes * 60 +
+          widget.routine.phases[_currentStep].seconds;
       _stepName = "";
       _displayTime = "Done!";
       paused = true;
-      _pausePlayIcon = Icon(Icons.play_arrow);
+      disablePause = false;
+      disableNext = true;
+      disablePrevious = true;
+      _pausePlayIcon = Icon(Icons.restore);
     });
   }
 
@@ -488,6 +496,21 @@ class _TimerPageState extends State<TimerPage> {
     }
   }
 
+  void skipNext() {
+    if(!paused){
+      disableNext = true;
+    }
+    
+    _timer.cancel();
+    if(_currentStep < widget.routine.phases.length - 1){
+      _currentStep++;
+      playNextStep();
+    }
+    else {
+      finishRoutine();
+    }
+  }
+
   void pause() {
     paused = true;
     _timer.cancel();
@@ -497,13 +520,7 @@ class _TimerPageState extends State<TimerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.routine.name), actions: <Widget>[
-        IconButton(
-          icon: Icon(Icons.play_arrow),
-          onPressed: () {
-            paused = false;
-            playNextStep();
-          },
-        ),
+       
       ]),
       body: Center(
           child: Column(
@@ -540,7 +557,9 @@ class _TimerPageState extends State<TimerPage> {
             IconButton(
               icon: Icon(Icons.skip_next),
               onPressed: () {
-
+                if(!disableNext){
+                  skipNext();
+                }
               },
             ),
           ]),
