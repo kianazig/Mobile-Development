@@ -94,7 +94,7 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.teal,
       ),
       home: MyHomePage(title: 'Training Timer'),
     );
@@ -222,14 +222,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: const EdgeInsets.all(8),
                 itemCount: _user.routines.length,
                 itemBuilder: (BuildContext context, int index) {
-                  return Container(
-                    height: 50,
-                    color: Colors.blue,
-                    child: Container(
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.only(left: 20),
-                      child: ListTile(
-                          title: Text('${_user.routines[index].name}'),
+                  return ListTile(
+                    title: Text('${_user.routines[index].name}'),
                           trailing: Icon(Icons.keyboard_arrow_right),
                           onTap: () {
                             Navigator.push(
@@ -238,12 +232,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                   builder: (context) => ViewRoutinePage(
                                       routine: _user.routines[index])),
                             );
-                          }),
-                    ),
+                          },
                   );
                 },
-                separatorBuilder: (BuildContext context, int index) =>
-                    const Divider(height: 1),
+                separatorBuilder: (BuildContext context, int index) {
+                  return Divider(thickness: 1.5);
+                }
               ),
             ],
           ),
@@ -278,7 +272,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       MainAxisAlignment.spaceEvenly,
                                   children: <Widget>[
                                     FlatButton(
-                                      color: Colors.grey,
+                                      color: Colors.grey[400],
                                       onPressed: () {
                                         Navigator.pop(context);
                                       },
@@ -287,7 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       ),
                                     ),
                                     FlatButton(
-                                      color: Colors.blue,
+                                      color: Colors.teal,
                                       onPressed: () {
                                         if (_formKey.currentState.validate()) {
                                           _addRoutine();
@@ -335,7 +329,7 @@ class ViewRoutinePage extends StatelessWidget {
           child: Column(
         children: <Widget>[
           RaisedButton(
-            color: Colors.blue,
+            color: Colors.teal,
             onPressed: () {
               Navigator.pop(context);
               Navigator.push(
@@ -353,20 +347,12 @@ class ViewRoutinePage extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             itemCount: routine.phases.length,
             itemBuilder: (BuildContext context, int index) {
-              return Container(
-                height: 50,
-                color: Colors.blue,
-                child: Container(
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.only(left: 20),
-                  child: ListTile(
-                    title: Text('${routine.phases[index].getTitle()}'),
-                  ),
-                ),
+              return ListTile(
+                title: Text('${routine.phases[index].getTitle()}'),
               );
             },
             separatorBuilder: (BuildContext context, int index) =>
-                const Divider(height: 1),
+                const Divider(thickness: 1.5),
           ),
         ],
       )),
@@ -524,16 +510,23 @@ class _TimerPageState extends State<TimerPage> {
       ]),
       body: Center(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Text(
             _stepName,
             style: TextStyle(fontSize: 40.0),
           ),
-          Text(
-            _displayTime,
-            style: TextStyle(fontSize: 50.0),
+          Padding(
+              padding: EdgeInsets.fromLTRB(0, 30, 0, 30),
+            child: Text(
+              _displayTime,
+              style: TextStyle(fontSize: 50.0),
+            ),
           ),
-          Row(children: <Widget>[
+          Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
             IconButton(
                 icon: Icon(Icons.skip_previous),
                 onPressed: () {
@@ -565,8 +558,6 @@ class _TimerPageState extends State<TimerPage> {
           ]),
         ],
       )),
-
-      // TODO: implement build
     );
   }
 }
@@ -642,31 +633,23 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
             padding: const EdgeInsets.all(8),
             itemCount: widget.routine.phases.length,
             itemBuilder: (BuildContext context, int index) {
-              return Container(
-                height: 50,
-                color: Colors.blue,
-                child: Container(
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.only(left: 20),
-                  child: ListTile(
-                    title: Text('${widget.routine.phases[index].getTitle()}'),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        var phase = widget.routine.phases[index];
-                        widget.routine.phases.remove(phase);
-                        setState(() {});
-                      },
-                    ),
-                  ),
+              return ListTile(
+                title: Text('${widget.routine.phases[index].getTitle()}'),
+                trailing: IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () {
+                    var phase = widget.routine.phases[index];
+                    widget.routine.phases.remove(phase);
+                    setState(() {});
+                  },
                 ),
               );
             },
             separatorBuilder: (BuildContext context, int index) =>
-                const Divider(height: 1),
+                const Divider(thickness: 1.5),
           ),
           RaisedButton(
-            color: Colors.blue,
+            color: Colors.teal,
             onPressed: () {
               showDialog(
                   context: context,
@@ -710,7 +693,7 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                         MainAxisAlignment.spaceEvenly,
                                     children: <Widget>[
                                       FlatButton(
-                                        color: Colors.grey,
+                                        color: Colors.grey[400],
                                         onPressed: () {
                                           Navigator.pop(context);
                                         },
@@ -719,7 +702,7 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                         ),
                                       ),
                                       FlatButton(
-                                        color: Colors.blue,
+                                        color: Colors.teal,
                                         onPressed: () {
                                           if (_formKey.currentState
                                               .validate()) {
