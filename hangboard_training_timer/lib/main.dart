@@ -96,7 +96,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.teal,
       ),
-      home: MyHomePage(title: 'Training Timer'),
+      home: MyHomePage(title: 'Ti[me]' + String.fromCharCode(0x00B2)),
     );
   }
 }
@@ -195,7 +195,7 @@ class _MyHomePageState extends State<MyHomePage> {
         appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
-          title: Text('Training Timer'),
+          title: Text('Ti[me]' + String.fromCharCode(0x00B2)),
         ),
         body: Center(
           // Center is a layout widget. It takes a single child and positions it
@@ -272,7 +272,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       MainAxisAlignment.spaceEvenly,
                                   children: <Widget>[
                                     FlatButton(
-                                      color: Colors.grey[400],
+                                      color: Colors.grey[300],
                                       onPressed: () {
                                         Navigator.pop(context);
                                       },
@@ -281,7 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       ),
                                     ),
                                     FlatButton(
-                                      color: Colors.teal,
+                                      color: Colors.teal[200],
                                       onPressed: () {
                                         if (_formKey.currentState.validate()) {
                                           _addRoutine();
@@ -328,18 +328,21 @@ class ViewRoutinePage extends StatelessWidget {
       body: Center(
           child: Column(
         children: <Widget>[
-          RaisedButton(
-            color: Colors.teal,
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => TimerPage(routine: routine)),
-              );
-            },
-            child: Text(
-              "Start Routine!",
+          Padding(
+            padding: EdgeInsets.only(top: 10),
+            child: RaisedButton(
+              color: Colors.teal[200],
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => TimerPage(routine: routine)),
+                );
+              },
+              child: Text(
+                "Start Routine!",
+              ),
             ),
           ),
           ListView.separated(
@@ -649,7 +652,7 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                 const Divider(thickness: 1.5),
           ),
           RaisedButton(
-            color: Colors.teal,
+            color: Colors.teal[200],
             onPressed: () {
               showDialog(
                   context: context,
@@ -693,7 +696,7 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                         MainAxisAlignment.spaceEvenly,
                                     children: <Widget>[
                                       FlatButton(
-                                        color: Colors.grey[400],
+                                        color: Colors.grey[300],
                                         onPressed: () {
                                           Navigator.pop(context);
                                         },
@@ -702,7 +705,7 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                         ),
                                       ),
                                       FlatButton(
-                                        color: Colors.teal,
+                                        color: Colors.teal[200],
                                         onPressed: () {
                                           if (_formKey.currentState
                                               .validate()) {
