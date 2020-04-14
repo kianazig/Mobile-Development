@@ -2,12 +2,15 @@ import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 
+import 'package:flutter_tts/flutter_tts.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:flutter/material.dart';
 
 User _user;
+FlutterTts textToSpeech;
 
 class User {
   String id;
@@ -132,6 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _user = User(id);
       _getRoutines();
     });
+    textToSpeech = FlutterTts();
   }
 
   void _addRoutine() {
@@ -382,6 +386,7 @@ class _TimerPageState extends State<TimerPage> {
   bool disablePause = false;
   bool disableNext = false;
   Icon _pausePlayIcon = Icon(Icons.play_arrow);
+  var speechLengths;
 
   @override
   void initState() {
@@ -390,6 +395,35 @@ class _TimerPageState extends State<TimerPage> {
         widget.routine.phases[_currentStep].seconds;
     _displayTime = formatTime(_remainingTime);
     _stepName = widget.routine.phases[_currentStep].name;
+    speechLengths = List();
+    getSpeechLengths();
+  }
+
+  void getSpeechLengths() {
+    Stopwatch stopwatch = Stopwatch();
+    textToSpeech.setVolume(0.0);
+    int stepNumber=0;
+    textToSpeech.speak(widget.routine.phases[0].name);
+
+    textToSpeech.setStartHandler((){
+      stopwatch.start();
+      stepNumber++;
+    });
+
+    textToSpeech.setCompletionHandler((){
+      stopwatch.stop();
+      Duration timeElapsed = stopwatch.elapsed;
+      speechLengths.add(timeElapsed.inSeconds + 1);
+      stopwatch.reset();
+      if (stepNumber<widget.routine.phases.length){
+        textToSpeech.speak(widget.routine.phases[stepNumber].name);
+      }
+      else{
+        textToSpeech.completionHandler = null;
+        textToSpeech.startHandler = null;
+      }
+      print(timeElapsed.inSeconds.toString());
+    });
   }
 
   void playNextStep() {
@@ -404,6 +438,7 @@ class _TimerPageState extends State<TimerPage> {
   }
 
   void play() {
+    textToSpeech.setVolume(1.0);
     paused = false;
     Timer.periodic(
         Duration(
@@ -420,6 +455,22 @@ class _TimerPageState extends State<TimerPage> {
         if (_remainingTime < 0) {
           _timer.cancel();
           goToNextStep();
+        }
+
+        if(_currentStep == widget.routine.phases.length-1){
+          if (_remainingTime == 5){
+            textToSpeech.speak('Done');
+          }
+        }
+        else if(_remainingTime == speechLengths[_currentStep+1] + 4){
+          textToSpeech.speak(widget.routine.phases[_currentStep+1].name);
+        }
+
+        if (_remainingTime == 4){
+          textToSpeech.speak('in');
+        }
+        else if (_remainingTime < 4 && _remainingTime > 0) {
+          textToSpeech.speak(_remainingTime.toString());
         }
       });
     });
