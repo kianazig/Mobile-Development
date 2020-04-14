@@ -614,20 +614,60 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
   var stepSeconds = 0;
 
   void _addStep() {
-    var phase = Phase(stepNameController.text, stepMinutes, stepSeconds);
-    calculateSpeechTime(phase, false, 0);
-    widget.routine.phases.add(phase);
-    stepNameController.text = "";
-    setState(() {});
+    if(validateTime() == true){
+      var phase = Phase(stepNameController.text, stepMinutes, stepSeconds);
+      calculateSpeechTime(phase, false, 0);
+      widget.routine.phases.add(phase);
+      stepNameController.text = "";
+      Navigator.pop(context);
+      setState(() {});
+    }
+    else{
+      alertInvalidTime();
+    }
   }
 
   void _editStep(Phase phase) {
-    phase.name = stepNameController.text;
-    phase.minutes = stepMinutes;
-    phase.seconds = stepSeconds;
-    calculateSpeechTime(phase, false, 0);
-    stepNameController.text = "";
-    setState(() {});
+    if(validateTime() == true){
+      phase.name = stepNameController.text;
+      phase.minutes = stepMinutes;
+      phase.seconds = stepSeconds;
+      calculateSpeechTime(phase, false, 0);
+      stepNameController.text = "";
+      Navigator.pop(context);
+      setState(() {});
+    }
+    else {
+      alertInvalidTime();
+    }
+  }
+
+  bool validateTime(){
+    bool validTime = true;
+    if(stepMinutes == 0 && stepSeconds == 0){
+      validTime = false;
+    }
+    return validTime;
+  }
+
+  void alertInvalidTime(){
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: new Text('Oops!'),
+          content: new Text("Can't add step with duration of 0 minutes and 0 seconds.\n\nHint: Try swiping up or down to choose the timer duration."),
+          actions: <Widget>[
+            new FlatButton(
+              child: new Text("Close"),
+              onPressed: (){
+                Navigator.of(context).pop();
+              }
+            ),
+          ],
+        );
+      }
+    );
   }
 
   void calculateSpeechTime(Phase phase, bool addToDB, int phaseNumber){
@@ -789,7 +829,6 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                                 if (_formKey.currentState
                                                     .validate()) {
                                                   _editStep(widget.routine.phases[index]);
-                                                  Navigator.pop(context);
                                                 }
                                               },
                                               child: Text(
@@ -809,6 +848,8 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
           RaisedButton(
             color: Colors.teal[200],
             onPressed: () {
+              stepMinutes = 0;
+              stepSeconds = 0;
               showDialog(
                   context: context,
                   builder: (BuildContext context) {
@@ -865,7 +906,6 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                           if (_formKey.currentState
                                               .validate()) {
                                             _addStep();
-                                            Navigator.pop(context);
                                           }
                                         },
                                         child: Text(
