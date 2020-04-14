@@ -621,6 +621,15 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
     setState(() {});
   }
 
+  void _editStep(Phase phase) {
+    phase.name = stepNameController.text;
+    phase.minutes = stepMinutes;
+    phase.seconds = stepSeconds;
+    calculateSpeechTime(phase, false, 0);
+    stepNameController.text = "";
+    setState(() {});
+  }
+
   void calculateSpeechTime(Phase phase, bool addToDB, int phaseNumber){
     Stopwatch stopwatch = Stopwatch();
     textToSpeech.setVolume(0.0);
@@ -722,6 +731,76 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                     setState(() {});
                   },
                 ),
+                onTap: () {
+                  stepNameController.text = widget.routine.phases[index].name;
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                              content: Form(
+                                  key: _formKey,
+                                  child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: TextFormField(
+                                            controller: stepNameController,
+                                            decoration: InputDecoration(
+                                                labelText: 'Step Name *'),
+                                            validator: (value) {
+                                              if (value.isEmpty) {
+                                                return 'Please enter a name';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+                                        ),
+                                        CupertinoTimerPicker(
+                                          mode: CupertinoTimerPickerMode.ms,
+                                          minuteInterval: 1,
+                                          secondInterval: 1,
+                                          initialTimerDuration: Duration(minutes: widget.routine.phases[index].minutes, seconds:widget.routine.phases[index].seconds),
+                                          onTimerDurationChanged:
+                                              (Duration newDuration) {
+                                            FocusScope.of(context)
+                                                .requestFocus(FocusNode());
+                                            setState(() {});
+                                            stepMinutes = newDuration.inMinutes;
+                                            stepSeconds = newDuration.inSeconds % 60;
+                                          },
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                          children: <Widget>[
+                                            FlatButton(
+                                              color: Colors.grey[300],
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                              },
+                                              child: Text(
+                                                "Cancel",
+                                              ),
+                                            ),
+                                            FlatButton(
+                                              color: Colors.teal[200],
+                                              onPressed: () {
+                                                if (_formKey.currentState
+                                                    .validate()) {
+                                                  _editStep(widget.routine.phases[index]);
+                                                  Navigator.pop(context);
+                                                }
+                                              },
+                                              child: Text(
+                                                "Edit Step",
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      ])));
+                        });
+                  },
               );
             },
             separatorBuilder: (BuildContext context, int index) =>
