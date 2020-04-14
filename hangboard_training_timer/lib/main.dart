@@ -26,6 +26,7 @@ class Phase {
   String name;
   int minutes;
   int seconds;
+  int speechTime;
 
   Phase(name, minutes, seconds) {
     this.name = name;
@@ -171,6 +172,7 @@ class _MyHomePageState extends State<MyHomePage> {
           for (var nextPhase in phases) {
             Phase phase = Phase(
                 nextPhase['name'], nextPhase['minutes'], nextPhase['seconds']);
+            phase.speechTime = nextPhase['speechTime'];
             routine.phases.add(phase);
           }
         }
@@ -386,7 +388,6 @@ class _TimerPageState extends State<TimerPage> {
   bool disablePause = false;
   bool disableNext = false;
   Icon _pausePlayIcon = Icon(Icons.play_arrow);
-  var speechLengths;
 
   @override
   void initState() {
@@ -395,35 +396,6 @@ class _TimerPageState extends State<TimerPage> {
         widget.routine.phases[_currentStep].seconds;
     _displayTime = formatTime(_remainingTime);
     _stepName = widget.routine.phases[_currentStep].name;
-    speechLengths = List();
-    getSpeechLengths();
-  }
-
-  void getSpeechLengths() {
-    Stopwatch stopwatch = Stopwatch();
-    textToSpeech.setVolume(0.0);
-    int stepNumber=0;
-    textToSpeech.speak(widget.routine.phases[0].name);
-
-    textToSpeech.setStartHandler((){
-      stopwatch.start();
-      stepNumber++;
-    });
-
-    textToSpeech.setCompletionHandler((){
-      stopwatch.stop();
-      Duration timeElapsed = stopwatch.elapsed;
-      speechLengths.add(timeElapsed.inSeconds + 1);
-      stopwatch.reset();
-      if (stepNumber<widget.routine.phases.length){
-        textToSpeech.speak(widget.routine.phases[stepNumber].name);
-      }
-      else{
-        textToSpeech.completionHandler = null;
-        textToSpeech.startHandler = null;
-      }
-      print(timeElapsed.inSeconds.toString());
-    });
   }
 
   void playNextStep() {
@@ -462,7 +434,7 @@ class _TimerPageState extends State<TimerPage> {
             textToSpeech.speak('Done');
           }
         }
-        else if(_remainingTime == speechLengths[_currentStep+1] + 4){
+        else if(_remainingTime == widget.routine.phases[_currentStep+1].speechTime + 4){
           textToSpeech.speak(widget.routine.phases[_currentStep+1].name);
         }
 
@@ -521,6 +493,7 @@ class _TimerPageState extends State<TimerPage> {
 
   void skipPrevious() {
     if (!disablePrevious){
+      textToSpeech.stop();
 
       if(!paused){
         disablePrevious = true;
@@ -537,6 +510,7 @@ class _TimerPageState extends State<TimerPage> {
   }
 
   void skipNext() {
+    textToSpeech.stop();
     if(!paused){
       disableNext = true;
     }
@@ -554,6 +528,7 @@ class _TimerPageState extends State<TimerPage> {
   void pause() {
     paused = true;
     _timer.cancel();
+    textToSpeech.stop();
   }
 
   @override
@@ -639,9 +614,29 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
 
   void _addStep() {
     var phase = Phase(stepNameController.text, stepMinutes, stepSeconds);
+    calculateSpeechTime(phase);
     widget.routine.phases.add(phase);
     stepNameController.text = "";
     setState(() {});
+  }
+
+  void calculateSpeechTime(Phase phase){
+    Stopwatch stopwatch = Stopwatch();
+    textToSpeech.setVolume(0.0);
+    textToSpeech.speak(phase.name);
+
+    textToSpeech.setStartHandler((){
+      stopwatch.start();
+    });
+
+    textToSpeech.setCompletionHandler((){
+      stopwatch.stop();
+      Duration timeElapsed = stopwatch.elapsed;
+      phase.speechTime = timeElapsed.inSeconds + 1;
+      stopwatch.reset();
+      textToSpeech.completionHandler = null;
+      textToSpeech.startHandler = null;
+    });
   }
 
   void _updateRoutine() {
@@ -655,7 +650,8 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
           .update({
         'name': widget.routine.phases[i].name,
         'minutes': widget.routine.phases[i].minutes,
-        'seconds': widget.routine.phases[i].seconds
+        'seconds': widget.routine.phases[i].seconds,
+        'speechTime': widget.routine.phases[i].speechTime
       });
     }
   }
