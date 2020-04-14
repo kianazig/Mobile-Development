@@ -32,6 +32,7 @@ class Phase {
     this.name = name;
     this.minutes = minutes;
     this.seconds = seconds;
+    speechTime = 0;
   }
 
   String getTitle() {
@@ -614,13 +615,13 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
 
   void _addStep() {
     var phase = Phase(stepNameController.text, stepMinutes, stepSeconds);
-    calculateSpeechTime(phase);
+    calculateSpeechTime(phase, false, 0);
     widget.routine.phases.add(phase);
     stepNameController.text = "";
     setState(() {});
   }
 
-  void calculateSpeechTime(Phase phase){
+  void calculateSpeechTime(Phase phase, bool addToDB, int phaseNumber){
     Stopwatch stopwatch = Stopwatch();
     textToSpeech.setVolume(0.0);
     textToSpeech.speak(phase.name);
@@ -633,9 +634,23 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
       stopwatch.stop();
       Duration timeElapsed = stopwatch.elapsed;
       phase.speechTime = timeElapsed.inSeconds + 1;
+      if(addToDB){
+        addSpeechTimeToDB(phaseNumber);
+      }
       stopwatch.reset();
       textToSpeech.completionHandler = null;
       textToSpeech.startHandler = null;
+    });
+  }
+
+  addSpeechTimeToDB(int phaseNumber){
+    var routineNumber = _user.routines.indexOf(widget.routine);
+    databaseReference
+        .child(routineNumber.toString())
+        .child('phases')
+        .child(phaseNumber.toString())
+        .update({
+      'speechTime': widget.routine.phases[phaseNumber].speechTime
     });
   }
 
@@ -643,16 +658,30 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
     var routineNumber = _user.routines.indexOf(widget.routine);
     databaseReference.child(routineNumber.toString()).child('phases').remove();
     for (var i = 0; i < widget.routine.phases.length; i++) {
-      databaseReference
-          .child(routineNumber.toString())
-          .child('phases')
-          .child(i.toString())
-          .update({
-        'name': widget.routine.phases[i].name,
-        'minutes': widget.routine.phases[i].minutes,
-        'seconds': widget.routine.phases[i].seconds,
-        'speechTime': widget.routine.phases[i].speechTime
-      });
+      if(widget.routine.phases[i].speechTime == 0){
+        databaseReference
+            .child(routineNumber.toString())
+            .child('phases')
+            .child(i.toString())
+            .update({
+          'name': widget.routine.phases[i].name,
+          'minutes': widget.routine.phases[i].minutes,
+          'seconds': widget.routine.phases[i].seconds
+        });
+        calculateSpeechTime(widget.routine.phases[i], true, i);
+      }
+      else{
+        databaseReference
+            .child(routineNumber.toString())
+            .child('phases')
+            .child(i.toString())
+            .update({
+          'name': widget.routine.phases[i].name,
+          'minutes': widget.routine.phases[i].minutes,
+          'seconds': widget.routine.phases[i].seconds,
+          'speechTime': widget.routine.phases[i].speechTime
+        });
+      }
     }
   }
 
