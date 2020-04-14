@@ -410,7 +410,9 @@ class _TimerPageState extends State<TimerPage> {
   bool paused = true;
   bool disablePause = false;
   bool disableNext = false;
+  bool muted = false;
   Icon _pausePlayIcon = Icon(Icons.play_arrow);
+  Icon _soundIcon = Icon(Icons.volume_up);
 
   @override
   void initState() {
@@ -419,6 +421,7 @@ class _TimerPageState extends State<TimerPage> {
         widget.routine.phases[_currentStep].seconds;
     _displayTime = formatTime(_remainingTime);
     _stepName = widget.routine.phases[_currentStep].name;
+    textToSpeech.setVolume(1.0);
   }
 
   void playNextStep() {
@@ -433,7 +436,6 @@ class _TimerPageState extends State<TimerPage> {
   }
 
   void play() {
-    textToSpeech.setVolume(1.0);
     paused = false;
     Timer.periodic(
         Duration(
@@ -554,11 +556,31 @@ class _TimerPageState extends State<TimerPage> {
     textToSpeech.stop();
   }
 
+  void toggleSound(){
+    if (muted){
+      muted = false;
+      textToSpeech.setVolume(1.0);
+      _soundIcon = Icon(Icons.volume_up);
+      setState((){});
+    }
+    else {
+      muted = true;
+      textToSpeech.setVolume(0.0);
+      _soundIcon = Icon(Icons.volume_off);
+      setState((){});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.routine.name), actions: <Widget>[
-       
+        IconButton(
+          icon: _soundIcon,
+          onPressed: () {
+            toggleSound();
+          },
+        ),
       ]),
       body: Center(
           child: Column(
