@@ -340,12 +340,34 @@ class ViewRoutinePage extends StatelessWidget {
             child: RaisedButton(
               color: Colors.teal[200],
               onPressed: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => TimerPage(routine: routine)),
-                );
+                if(routine.phases == null || routine.phases.length == 0){
+                  showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: new Text('Oops!'),
+                          content: new Text("Looks like your routine doesn't have any steps yet. To start the timer, "
+                              "add some steps first!\n\nHint: Click the pencil icon in the top right corner to edit this routine."),
+                          actions: <Widget>[
+                            new FlatButton(
+                                child: new Text("Close"),
+                                onPressed: (){
+                                  Navigator.of(context).pop();
+                                }
+                            ),
+                          ],
+                        );
+                      }
+                  );
+                }
+                else {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => TimerPage(routine: routine)),
+                  );
+                }
               },
               child: Text(
                 "Start Routine!",
