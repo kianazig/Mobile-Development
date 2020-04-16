@@ -90,6 +90,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -225,27 +226,29 @@ class _MyHomePageState extends State<MyHomePage> {
             // axis because Columns are vertical (the cross axis would be
             // horizontal).
             children: <Widget>[
-              ListView.separated(
-                shrinkWrap: true,
-                padding: const EdgeInsets.all(8),
-                itemCount: _user.routines.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return ListTile(
-                    title: Text('${_user.routines[index].name}'),
-                          trailing: Icon(Icons.keyboard_arrow_right),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => ViewRoutinePage(
-                                      routine: _user.routines[index])),
-                            );
-                          },
-                  );
-                },
-                separatorBuilder: (BuildContext context, int index) {
-                  return Divider(thickness: 1.5);
-                }
+              Expanded(
+                child:  ListView.separated(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.all(8),
+                    itemCount: _user.routines.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return ListTile(
+                        title: Text('${_user.routines[index].name}'),
+                        trailing: Icon(Icons.keyboard_arrow_right),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ViewRoutinePage(
+                                    routine: _user.routines[index])),
+                          );
+                        },
+                      );
+                    },
+                    separatorBuilder: (BuildContext context, int index) {
+                      return Divider(thickness: 1.5);
+                    }
+                ),
               ),
             ],
           ),
@@ -375,18 +378,22 @@ class ViewRoutinePage extends StatelessWidget {
               ),
             ),
           ),
-          ListView.separated(
-            shrinkWrap: true,
-            padding: const EdgeInsets.all(8),
-            itemCount: routine.steps.length,
-            itemBuilder: (BuildContext context, int index) {
-              return ListTile(
-                title: Text('${routine.steps[index].getTitle()}'),
-              );
-            },
-            separatorBuilder: (BuildContext context, int index) =>
-                const Divider(thickness: 1.5),
+          Expanded(
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(8),
+              itemCount: routine.steps.length,
+              itemBuilder: (BuildContext context, int index) {
+                return ListTile(
+                  title: Text('${routine.steps[index].getTitle()}'),
+                );
+              },
+              separatorBuilder: (BuildContext context, int index) =>
+              const Divider(thickness: 1.5),
+            ),
           ),
+
         ],
       )),
     );
@@ -830,23 +837,24 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
       body: Center(
           child: Column(
         children: <Widget>[
-          ListView.separated(
-            shrinkWrap: true,
-            padding: const EdgeInsets.all(8),
-            itemCount: widget.routine.steps.length,
-            itemBuilder: (BuildContext context, int index) {
-              return ListTile(
-                title: Text('${widget.routine.steps[index].getTitle()}'),
-                trailing: IconButton(
-                  icon: Icon(Icons.delete),
-                  onPressed: () {
-                    var step = widget.routine.steps[index];
-                    widget.routine.steps.remove(step);
-                    setState(() {});
-                  },
-                ),
-                onTap: () {
-                  stepNameController.text = widget.routine.steps[index].name;
+          Expanded(
+            child: ListView.separated(
+              shrinkWrap: true,
+              padding: const EdgeInsets.all(8),
+              itemCount: widget.routine.steps.length,
+              itemBuilder: (BuildContext context, int index) {
+                return ListTile(
+                  title: Text('${widget.routine.steps[index].getTitle()}'),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () {
+                      var step = widget.routine.steps[index];
+                      widget.routine.steps.remove(step);
+                      setState(() {});
+                    },
+                  ),
+                  onTap: () {
+                    stepNameController.text = widget.routine.steps[index].name;
                     showDialog(
                         context: context,
                         builder: (BuildContext context) {
@@ -914,10 +922,11 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                       ])));
                         });
                   },
-              );
-            },
-            separatorBuilder: (BuildContext context, int index) =>
-                const Divider(thickness: 1.5),
+                );
+              },
+              separatorBuilder: (BuildContext context, int index) =>
+              const Divider(thickness: 1.5),
+            ),
           ),
           RaisedButton(
             color: Colors.teal[200],
