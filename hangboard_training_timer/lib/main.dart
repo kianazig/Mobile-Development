@@ -23,13 +23,13 @@ class User {
   }
 }
 
-class Phase {
+class Step {
   String name;
   int minutes;
   int seconds;
   int speechTime;
 
-  Phase(name, minutes, seconds) {
+  Step(name, minutes, seconds) {
     this.name = name;
     this.minutes = minutes;
     this.seconds = seconds;
@@ -58,11 +58,11 @@ class Phase {
 
 class Routine {
   String name;
-  List<Phase> phases;
+  List<Step> steps;
 
   Routine(name) {
     this.name = name;
-    phases = List<Phase>();
+    steps = List<Step>();
   }
 }
 
@@ -166,22 +166,24 @@ class _MyHomePageState extends State<MyHomePage> {
         .once()
         .then((DataSnapshot snapshot) {
 
-      for (var nextRoutine in snapshot.value) {
-        Routine routine = Routine(nextRoutine['name']);
-        var phases = nextRoutine['phases'];
-        if (phases != null) {
-          for (var nextPhase in phases) {
-            Phase phase = Phase(
-                nextPhase['name'], nextPhase['minutes'], nextPhase['seconds']);
-            phase.speechTime = nextPhase['speechTime'];
-            routine.phases.add(phase);
-          }
-        }
+          if(snapshot.value != null){
+            for (var nextRoutine in snapshot.value) {
+              Routine routine = Routine(nextRoutine['name']);
+              var steps = nextRoutine['steps'];
+              if (steps != null) {
+                for (var nextStep in steps) {
+                  Step step = Step(
+                      nextStep['name'], nextStep['minutes'], nextStep['seconds']);
+                  step.speechTime = nextStep['speechTime'];
+                  routine.steps.add(step);
+                }
+              }
 
-        setState(() {
-          _user.routines.add(routine);
-        });
-      }
+              setState(() {
+                _user.routines.add(routine);
+              });
+            }
+          }
     });
 
     // setState(() {});
@@ -339,7 +341,7 @@ class ViewRoutinePage extends StatelessWidget {
             child: RaisedButton(
               color: Colors.teal[200],
               onPressed: () {
-                if(routine.phases == null || routine.phases.length == 0){
+                if(routine.steps == null || routine.steps.length == 0){
                   showDialog(
                       context: context,
                       builder: (BuildContext context) {
@@ -376,10 +378,10 @@ class ViewRoutinePage extends StatelessWidget {
           ListView.separated(
             shrinkWrap: true,
             padding: const EdgeInsets.all(8),
-            itemCount: routine.phases.length,
+            itemCount: routine.steps.length,
             itemBuilder: (BuildContext context, int index) {
               return ListTile(
-                title: Text('${routine.phases[index].getTitle()}'),
+                title: Text('${routine.steps[index].getTitle()}'),
               );
             },
             separatorBuilder: (BuildContext context, int index) =>
@@ -418,19 +420,19 @@ class _TimerPageState extends State<TimerPage> {
   @override
   void initState() {
     super.initState();
-    _remainingTime = widget.routine.phases[_currentStep].minutes * 60 +
-        widget.routine.phases[_currentStep].seconds;
+    _remainingTime = widget.routine.steps[_currentStep].minutes * 60 +
+        widget.routine.steps[_currentStep].seconds;
     _displayTime = formatTime(_remainingTime);
-    _stepName = widget.routine.phases[_currentStep].name;
+    _stepName = widget.routine.steps[_currentStep].name;
     textToSpeech.setVolume(1.0);
     audioCache = AudioCache();
     beepVolume = 1.0;
   }
 
   void playNextStep() {
-    _remainingTime = widget.routine.phases[_currentStep].minutes * 60 +
-        widget.routine.phases[_currentStep].seconds;
-    _stepName = widget.routine.phases[_currentStep].name;
+    _remainingTime = widget.routine.steps[_currentStep].minutes * 60 +
+        widget.routine.steps[_currentStep].seconds;
+    _stepName = widget.routine.steps[_currentStep].name;
     _displayTime = formatTime(_remainingTime);
     if(!paused){
       play();
@@ -446,7 +448,7 @@ class _TimerPageState extends State<TimerPage> {
         ), (Timer timer) {
           _timer = timer;
       setState(() {
-        _stepName = widget.routine.phases[_currentStep].name;
+        _stepName = widget.routine.steps[_currentStep].name;
         _remainingTime--;
         disablePrevious = false;
         disablePause = false;
@@ -457,13 +459,13 @@ class _TimerPageState extends State<TimerPage> {
           goToNextStep();
         }
 
-        if(_currentStep == widget.routine.phases.length-1){
+        if(_currentStep == widget.routine.steps.length-1){
           if (_remainingTime == 5){
             textToSpeech.speak('Done');
           }
         }
-        else if(_remainingTime == widget.routine.phases[_currentStep+1].speechTime + 4){
-          textToSpeech.speak(widget.routine.phases[_currentStep+1].name);
+        else if(_remainingTime == widget.routine.steps[_currentStep+1].speechTime + 4){
+          textToSpeech.speak(widget.routine.steps[_currentStep+1].name);
         }
 
         if (_remainingTime == 4){
@@ -473,7 +475,7 @@ class _TimerPageState extends State<TimerPage> {
           textToSpeech.speak(_remainingTime.toString());
         }
         else if(_remainingTime == 0){
-          if(_currentStep == widget.routine.phases.length - 1){
+          if(_currentStep == widget.routine.steps.length - 1){
             audioCache.play('sound/double_beep.mp3', volume: beepVolume);
           }
           else{
@@ -507,7 +509,7 @@ class _TimerPageState extends State<TimerPage> {
       _timer.cancel();
     }
     _currentStep++;
-    if (_currentStep < widget.routine.phases.length) {
+    if (_currentStep < widget.routine.steps.length) {
       playNextStep();
     } else {
       finishRoutine();
@@ -517,8 +519,8 @@ class _TimerPageState extends State<TimerPage> {
   void finishRoutine() {
     setState(() {
       _currentStep = 0;
-      _remainingTime = widget.routine.phases[_currentStep].minutes * 60 +
-          widget.routine.phases[_currentStep].seconds;
+      _remainingTime = widget.routine.steps[_currentStep].minutes * 60 +
+          widget.routine.steps[_currentStep].seconds;
       _stepName = "";
       _displayTime = "Done!";
       paused = true;
@@ -541,8 +543,8 @@ class _TimerPageState extends State<TimerPage> {
         _timer.cancel();
       }
 
-      if(_remainingTime >= widget.routine.phases[_currentStep].minutes * 60 +
-          widget.routine.phases[_currentStep].seconds - 1 && _currentStep > 0){
+      if(_remainingTime >= widget.routine.steps[_currentStep].minutes * 60 +
+          widget.routine.steps[_currentStep].seconds - 1 && _currentStep > 0){
         _currentStep--;
       }
 
@@ -560,7 +562,7 @@ class _TimerPageState extends State<TimerPage> {
       _timer.cancel();
     }
 
-    if(_currentStep < widget.routine.phases.length - 1){
+    if(_currentStep < widget.routine.steps.length - 1){
       _currentStep++;
       playNextStep();
     }
@@ -687,9 +689,9 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
 
   void _addStep() {
     if(validateTime() == true){
-      var phase = Phase(stepNameController.text, stepMinutes, stepSeconds);
-      calculateSpeechTime(phase, false, 0);
-      widget.routine.phases.add(phase);
+      var step = Step(stepNameController.text, stepMinutes, stepSeconds);
+      calculateSpeechTime(step, false, 0);
+      widget.routine.steps.add(step);
       stepNameController.text = "";
       Navigator.pop(context);
       setState(() {});
@@ -699,12 +701,12 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
     }
   }
 
-  void _editStep(Phase phase) {
+  void _editStep(Step step) {
     if(validateTime() == true){
-      phase.name = stepNameController.text;
-      phase.minutes = stepMinutes;
-      phase.seconds = stepSeconds;
-      calculateSpeechTime(phase, false, 0);
+      step.name = stepNameController.text;
+      step.minutes = stepMinutes;
+      step.seconds = stepSeconds;
+      calculateSpeechTime(step, false, 0);
       stepNameController.text = "";
       Navigator.pop(context);
       setState(() {});
@@ -742,10 +744,10 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
     );
   }
 
-  void calculateSpeechTime(Phase phase, bool addToDB, int phaseNumber){
+  void calculateSpeechTime(Step step, bool addToDB, int stepNumber){
     Stopwatch stopwatch = Stopwatch();
     textToSpeech.setVolume(0.0);
-    textToSpeech.speak(phase.name);
+    textToSpeech.speak(step.name);
 
     textToSpeech.setStartHandler((){
       stopwatch.start();
@@ -754,9 +756,9 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
     textToSpeech.setCompletionHandler((){
       stopwatch.stop();
       Duration timeElapsed = stopwatch.elapsed;
-      phase.speechTime = timeElapsed.inSeconds + 1;
+      step.speechTime = timeElapsed.inSeconds + 1;
       if(addToDB){
-        addSpeechTimeToDB(phaseNumber);
+        addSpeechTimeToDB(stepNumber);
       }
       stopwatch.reset();
       textToSpeech.completionHandler = null;
@@ -764,43 +766,43 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
     });
   }
 
-  addSpeechTimeToDB(int phaseNumber){
+  addSpeechTimeToDB(int stepNumber){
     var routineNumber = _user.routines.indexOf(widget.routine);
     databaseReference
         .child(routineNumber.toString())
-        .child('phases')
-        .child(phaseNumber.toString())
+        .child('steps')
+        .child(stepNumber.toString())
         .update({
-      'speechTime': widget.routine.phases[phaseNumber].speechTime
+      'speechTime': widget.routine.steps[stepNumber].speechTime
     });
   }
 
   void _updateRoutine() {
     var routineNumber = _user.routines.indexOf(widget.routine);
-    databaseReference.child(routineNumber.toString()).child('phases').remove();
-    for (var i = 0; i < widget.routine.phases.length; i++) {
-      if(widget.routine.phases[i].speechTime == 0){
+    databaseReference.child(routineNumber.toString()).child('steps').remove();
+    for (var i = 0; i < widget.routine.steps.length; i++) {
+      if(widget.routine.steps[i].speechTime == 0){
         databaseReference
             .child(routineNumber.toString())
-            .child('phases')
+            .child('steps')
             .child(i.toString())
             .update({
-          'name': widget.routine.phases[i].name,
-          'minutes': widget.routine.phases[i].minutes,
-          'seconds': widget.routine.phases[i].seconds
+          'name': widget.routine.steps[i].name,
+          'minutes': widget.routine.steps[i].minutes,
+          'seconds': widget.routine.steps[i].seconds
         });
-        calculateSpeechTime(widget.routine.phases[i], true, i);
+        calculateSpeechTime(widget.routine.steps[i], true, i);
       }
       else{
         databaseReference
             .child(routineNumber.toString())
-            .child('phases')
+            .child('steps')
             .child(i.toString())
             .update({
-          'name': widget.routine.phases[i].name,
-          'minutes': widget.routine.phases[i].minutes,
-          'seconds': widget.routine.phases[i].seconds,
-          'speechTime': widget.routine.phases[i].speechTime
+          'name': widget.routine.steps[i].name,
+          'minutes': widget.routine.steps[i].minutes,
+          'seconds': widget.routine.steps[i].seconds,
+          'speechTime': widget.routine.steps[i].speechTime
         });
       }
     }
@@ -831,20 +833,20 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
           ListView.separated(
             shrinkWrap: true,
             padding: const EdgeInsets.all(8),
-            itemCount: widget.routine.phases.length,
+            itemCount: widget.routine.steps.length,
             itemBuilder: (BuildContext context, int index) {
               return ListTile(
-                title: Text('${widget.routine.phases[index].getTitle()}'),
+                title: Text('${widget.routine.steps[index].getTitle()}'),
                 trailing: IconButton(
                   icon: Icon(Icons.delete),
                   onPressed: () {
-                    var phase = widget.routine.phases[index];
-                    widget.routine.phases.remove(phase);
+                    var step = widget.routine.steps[index];
+                    widget.routine.steps.remove(step);
                     setState(() {});
                   },
                 ),
                 onTap: () {
-                  stepNameController.text = widget.routine.phases[index].name;
+                  stepNameController.text = widget.routine.steps[index].name;
                     showDialog(
                         context: context,
                         builder: (BuildContext context) {
@@ -872,7 +874,7 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                           mode: CupertinoTimerPickerMode.ms,
                                           minuteInterval: 1,
                                           secondInterval: 1,
-                                          initialTimerDuration: Duration(minutes: widget.routine.phases[index].minutes, seconds:widget.routine.phases[index].seconds),
+                                          initialTimerDuration: Duration(minutes: widget.routine.steps[index].minutes, seconds:widget.routine.steps[index].seconds),
                                           onTimerDurationChanged:
                                               (Duration newDuration) {
                                             FocusScope.of(context)
@@ -900,7 +902,7 @@ class _EditRoutinePageState extends State<EditRoutinePage> {
                                               onPressed: () {
                                                 if (_formKey.currentState
                                                     .validate()) {
-                                                  _editStep(widget.routine.phases[index]);
+                                                  _editStep(widget.routine.steps[index]);
                                                 }
                                               },
                                               child: Text(
