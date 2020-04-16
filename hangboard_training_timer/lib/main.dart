@@ -3,6 +3,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:audioplayers/audio_cache.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -164,7 +165,6 @@ class _MyHomePageState extends State<MyHomePage> {
         .child('routines')
         .once()
         .then((DataSnapshot snapshot) {
-      print('Data : ${snapshot.value}');
 
       for (var nextRoutine in snapshot.value) {
         Routine routine = Routine(nextRoutine['name']);
@@ -222,7 +222,6 @@ class _MyHomePageState extends State<MyHomePage> {
             // center the children vertically; the main axis here is the vertical
             // axis because Columns are vertical (the cross axis would be
             // horizontal).
-            // TEST mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
               ListView.separated(
                 shrinkWrap: true,
@@ -402,6 +401,7 @@ class TimerPage extends StatefulWidget {
 
 class _TimerPageState extends State<TimerPage> {
   Timer _timer;
+  AudioCache audioCache;
   int _currentStep = 0;
   int _remainingTime = 0;
   String _displayTime = "";
@@ -411,6 +411,7 @@ class _TimerPageState extends State<TimerPage> {
   bool disablePause = false;
   bool disableNext = false;
   bool muted = false;
+  double beepVolume;
   Icon _pausePlayIcon = Icon(Icons.play_arrow);
   Icon _soundIcon = Icon(Icons.volume_up);
 
@@ -422,6 +423,8 @@ class _TimerPageState extends State<TimerPage> {
     _displayTime = formatTime(_remainingTime);
     _stepName = widget.routine.phases[_currentStep].name;
     textToSpeech.setVolume(1.0);
+    audioCache = AudioCache();
+    beepVolume = 1.0;
   }
 
   void playNextStep() {
@@ -469,6 +472,14 @@ class _TimerPageState extends State<TimerPage> {
         else if (_remainingTime < 4 && _remainingTime > 0) {
           textToSpeech.speak(_remainingTime.toString());
         }
+        else if(_remainingTime == 0){
+          if(_currentStep == widget.routine.phases.length - 1){
+            audioCache.play('sound/double_beep.mp3', volume: beepVolume);
+          }
+          else{
+            audioCache.play('sound/single_beep.mp3', volume: beepVolume);
+          }
+        }
       });
     });
   }
@@ -492,7 +503,9 @@ class _TimerPageState extends State<TimerPage> {
     disablePrevious = true;
     disablePause = true;
     disableNext = true;
-    _timer.cancel();
+    if(_timer != null){
+      _timer.cancel();
+    }
     _currentStep++;
     if (_currentStep < widget.routine.phases.length) {
       playNextStep();
@@ -524,7 +537,10 @@ class _TimerPageState extends State<TimerPage> {
         disablePrevious = true;
       }
 
-      _timer.cancel();
+      if(_timer != null){
+        _timer.cancel();
+      }
+
       if(_remainingTime >= widget.routine.phases[_currentStep].minutes * 60 +
           widget.routine.phases[_currentStep].seconds - 1 && _currentStep > 0){
         _currentStep--;
@@ -539,8 +555,11 @@ class _TimerPageState extends State<TimerPage> {
     if(!paused){
       disableNext = true;
     }
-    
-    _timer.cancel();
+
+    if(_timer != null){
+      _timer.cancel();
+    }
+
     if(_currentStep < widget.routine.phases.length - 1){
       _currentStep++;
       playNextStep();
@@ -552,7 +571,10 @@ class _TimerPageState extends State<TimerPage> {
 
   void pause() {
     paused = true;
-    _timer.cancel();
+
+    if(_timer != null){
+      _timer.cancel();
+    }
     textToSpeech.stop();
   }
 
@@ -560,12 +582,14 @@ class _TimerPageState extends State<TimerPage> {
     if (muted){
       muted = false;
       textToSpeech.setVolume(1.0);
+      beepVolume = 1.0;
       _soundIcon = Icon(Icons.volume_up);
       setState((){});
     }
     else {
       muted = true;
       textToSpeech.setVolume(0.0);
+      beepVolume = 0.0;
       _soundIcon = Icon(Icons.volume_off);
       setState((){});
     }
@@ -589,13 +613,14 @@ class _TimerPageState extends State<TimerPage> {
         children: <Widget>[
           Text(
             _stepName,
-            style: TextStyle(fontSize: 40.0),
+            style: TextStyle(fontSize: 45.0),
+            textAlign: TextAlign.center,
           ),
           Padding(
               padding: EdgeInsets.fromLTRB(0, 30, 0, 30),
             child: Text(
               _displayTime,
-              style: TextStyle(fontSize: 50.0),
+              style: TextStyle(fontSize: 75.0),
             ),
           ),
           Row(
@@ -603,11 +628,13 @@ class _TimerPageState extends State<TimerPage> {
               children: <Widget>[
             IconButton(
                 icon: Icon(Icons.skip_previous),
+                iconSize: 50.0,
                 onPressed: () {
                   skipPrevious();
                 }),
             IconButton(
               icon: _pausePlayIcon,
+                iconSize: 50.0,
               onPressed: () {
                 if (!disablePause){
                   if (paused){
@@ -623,6 +650,7 @@ class _TimerPageState extends State<TimerPage> {
             ),
             IconButton(
               icon: Icon(Icons.skip_next),
+              iconSize: 50.0,
               onPressed: () {
                 if(!disableNext){
                   skipNext();
