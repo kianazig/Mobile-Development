@@ -80,7 +80,6 @@ Future<String> getUserID() async {
     sharedPreferences.setString("id", id);
     databaseReference.child(id).set({}); //TODO: Remove?
   }
-
   return id;
 }
 
@@ -138,6 +137,7 @@ class _MyHomePageState extends State<MyHomePage> {
     getUserID().then((id) {
       _user = User(id);
       _getRoutines();
+      setState(() { });
     });
     textToSpeech = FlutterTts();
   }
